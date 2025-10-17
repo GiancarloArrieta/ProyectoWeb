@@ -1,4 +1,7 @@
 <?php
+
+namespace App\Models;
+
 $servername = "localhost";
 $username = "proyecto";
 $password = "12345";
