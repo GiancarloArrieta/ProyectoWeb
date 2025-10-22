@@ -3,16 +3,27 @@
 <head>
     <meta charset="UTF-8">
     <title>Panel de Empleado - Dulces Ricos</title>
-    </head>
+    <style>
+        body { font-family: Arial, sans-serif; background-color: #f4f7f9; padding: 20px; }
+        header { border-bottom: 2px solid #ddd; padding-bottom: 15px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; }
+        header h1 { color: #34495e; margin: 0; }
+        header button { padding: 8px 15px; background-color: #e74c3c; color: white; border: none; border-radius: 4px; cursor: pointer; }
+        a button { border: none; padding: 10px 15px; border-radius: 4px; cursor: pointer; }
+        #user-profile a button { background-color: #3498db; color: white; margin-top: 15px; }
+        #user-tickets a button { background-color: #2ecc71; color: white; }
+    </style>
+</head>
 <body>
     <header>
         <h1>Bienvenido(a), [Nombre del Usuario]</h1>
-        <button type="button">Cerrar Sesión</button>
+            <button type="button" onclick="window.history.back()" class="btn-close">
+                        Cerrar
+            </button>
     </header>
 
     <main style="display: flex; gap: 30px; margin-top: 20px;">
         
-        <section id="user-profile" style="width: 30%; border: 1px solid #ccc; padding: 20px;">
+        <section id="user-profile" style="width: 30%; border: 1px solid #ccc; padding: 20px; background: white;">
             <h2>Mi Perfil</h2>
             
             <div style="text-align: center; margin-bottom: 20px;">
@@ -29,27 +40,29 @@
                 <p>
                     <strong>Puesto:</strong> [Puesto del Empleado]
                 </p>
-                <a href="editarInformacionUsuario" style="text-decoration: none;">
-                <button type="button">
-                    Editar Datos Personales
-                </button>
+                
+                <a href="editarInformacionUsuario.blade.php" style="text-decoration: none;">
+                    <button type="button">
+                        Editar Datos Personales
+                    </button>
                 </a>
             </div>
         </section>
 
-        <section id="user-tickets" style="width: 70%; border: 1px solid #ccc; padding: 20px;">
+        <section id="user-tickets" style="width: 70%; border: 1px solid #ccc; padding: 20px; background: white;">
             <h2>Gestión de Tickets</h2>
-            <a href="levantarTicket" style="text-decoration: none;">
-            <button type="button" onclick="mostrarModalNuevoTicket()">
-                + Levantar Nuevo Ticket
-            </button>
+            
+            <a href="levantarTicket.blade.php" style="text-decoration: none;">
+                <button type="button">
+                    + Levantar Nuevo Ticket
+                </button>
             </a>
             
             <h3 style="margin-top: 20px;">Lista de Mis Tickets</h3>
 
-            <table border="1" style="width: 100%; margin-top: 10px; text-align: left;">
+            <table border="1" style="width: 100%; margin-top: 10px; text-align: left; border-collapse: collapse;">
                 <thead>
-                    <tr>
+                    <tr style="background-color: #ecf0f1;">
                         <th>ID</th>
                         <th>Fecha Creación</th>
                         <th>Título / Problema</th>
@@ -97,21 +110,8 @@
             </table>
         </section>
     </main>
-
+    
     <div id="modal-nuevo-ticket" style="display:none;">
-        <h3>Levantar Nuevo Ticket</h3>
-        <form>
-            <p>
-                <label for="ticket_title">Título del Problema:</label><br>
-                <input type="text" id="ticket_title" name="title" required>
-            </p>
-            <p>
-                <label for="ticket_description">Descripción Detallada del Problema Técnico:</label><br>
-                <textarea id="ticket_description" name="description" rows="5" required></textarea>
-            </p>
-            <button type="submit">Enviar Solicitud</button>
-            <button type="button" onclick="ocultarModalNuevoTicket()">Cerrar</button>
-        </form>
-    </div>
+         </div>
 </body>
 </html>
