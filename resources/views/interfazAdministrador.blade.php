@@ -19,7 +19,7 @@
         <aside>
             <h3>Gestión del Sistema</h3>
             <nav>
-                <a href="#gestionar-usuarios">👥 Crear Usuarios y Roles</a>
+                <a href="/gestionarusuarios">👥 Crear Usuarios y Roles</a>
                 
                 <a href="#gestionar-departamentos">🏢 Administrar Departamentos</a>
                 

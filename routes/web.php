@@ -25,3 +25,7 @@ Route::get('/levantarTicket', function () {
 Route::get('/interfazadministrador', function () {
     return view('interfazAdministrador');
 });
+
+Route::get('/gestionarusuarios', function () {
+    return view('gestionarUsuario');
+});
