@@ -94,7 +94,7 @@
             if (passwordField.type === 'password') {
                 passwordField.type = 'text';
                 toggleIcon.textContent = '🙈';
-            } else {
+            } else{
                 passwordField.type = 'password';
                 toggleIcon.textContent = '👁️';
             }
@@ -113,7 +113,8 @@
             // Credenciales y Redirecciones
             const credenciales = {
                 ADMIN: { pass: 'ADMIN123', target: '/interfazadministrador' }, // Redirección para el jefe
-                GIANCARLO: { pass: 'GIANCARLO1', target: '/interfazusuario' } // Redirección para el usuario
+                GIANCARLO: { pass: 'GIANCARLO1', target: '/interfazusuario' },// Redirección para el usuario
+                SOPORTE: { pass: 'SOPORTE1', target: '/interfazsoporte' }
             };
 
             errorAlert.style.display = 'none';

@@ -29,3 +29,11 @@ Route::get('/interfazadministrador', function () {
 Route::get('/gestionarusuarios', function () {
     return view('gestionarUsuario');
 });
+
+Route::get('/interfazsoporte', function () {
+    return view('interfazSoporte');
+});
+
+Route::get('/detalleticket', function () {
+    return view('detallesTicket');
+});
