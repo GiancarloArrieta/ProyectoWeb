@@ -31,7 +31,7 @@
                             name="usuario" 
                             required 
                             class="form-input"
-                            placeholder="Ingresa tu nombre de usuario"
+                            placeholder="ADMIN o GIANCARLO"
                             autocomplete="username"
                             maxlength="30"
                             pattern="[a-zA-Z0-9_]+"
@@ -52,7 +52,7 @@
                             name="contrasena" 
                             required 
                             class="form-input"
-                            placeholder="Ingresa tu contraseña"
+                            placeholder="Contraseña"
                             autocomplete="current-password"
                             maxlength="50"
                             minlength="6"
@@ -93,49 +93,44 @@
 
             if (passwordField.type === 'password') {
                 passwordField.type = 'text';
-                toggleIcon.textContent = '🙈'; // Cambia el icono a ojo tachado
+                toggleIcon.textContent = '🙈';
             } else {
                 passwordField.type = 'password';
-                toggleIcon.textContent = '👁️'; // Cambia el icono a ojo abierto
+                toggleIcon.textContent = '👁️';
             }
         }
 
-        // FUNCIÓN PRINCIPAL PARA MANEJAR LA LÓGICA DE INICIO DE SESIÓN LOCAL
+        // LÓGICA PRINCIPAL PARA VERIFICAR CREDENCIALES Y REDIRIGIR LOCALMENTE
         function handleLogin(event) {
-            // 1. Previene el envío del formulario a la ruta del action
+            // Previene el envío del formulario HTTP
             event.preventDefault();
 
-            // 2. Obtiene los valores ingresados (los convertimos a mayúsculas para hacer la verificación insensible a mayúsculas/minúsculas)
+            // Obtiene los valores y los limpia/normaliza
             const usuario = document.getElementById('usuario').value.toUpperCase().trim();
             const contrasena = document.getElementById('contrasena').value.trim();
             const errorAlert = document.getElementById('error-alert');
 
-            // 3. Define las credenciales codificadas
+            // Credenciales y Redirecciones
             const credenciales = {
-                ADMIN: 'ADMIN123',
-                GIANCARLO: 'GIANCARLO1'
+                ADMIN: { pass: 'ADMIN123', target: 'dashboard_admin.html' }, // Redirección para el jefe
+                GIANCARLO: { pass: 'GIANCARLO1', target: '/interfazusuario' } // Redirección para el usuario
             };
 
-            // 4. Lógica de verificación
-            errorAlert.style.display = 'none'; // Oculta errores anteriores
+            errorAlert.style.display = 'none';
             errorAlert.textContent = '';
 
-            if (credenciales.hasOwnProperty(usuario) && credenciales[usuario] === contrasena) {
+            if (credenciales.hasOwnProperty(usuario) && credenciales[usuario].pass === contrasena) {
                 // Credenciales correctas
-                if (usuario === 'ADMIN') {
-                    // Redirigir al Dashboard de Admin
-                    window.location.href = 'dashboard_admin.html';
-                } else if (usuario === 'GIANCARLO') {
-                    // Redirigir al Dashboard de Usuario (Requisito)
-                    window.location.href = 'interfazUsuario.html';
-                }
+                const targetFile = credenciales[usuario].target;
+                
+                // Redirección local
+                window.location.href = targetFile;
             } else {
                 // Credenciales incorrectas
                 errorAlert.textContent = '⚠️ Usuario o Contraseña incorrectos.';
                 errorAlert.style.display = 'block';
             }
 
-            // Siempre devuelve false para mantener el control con JavaScript
             return false;
         }
     </script>
