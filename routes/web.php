@@ -21,3 +21,7 @@ Route::get('/editarInformacionUsuario', function () {
 Route::get('/levantarTicket', function () {
     return view('levantarTicket');
 });
+
+Route::get('/interfazadministrador', function () {
+    return view('interfazAdministrador');
+});

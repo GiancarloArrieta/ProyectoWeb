@@ -112,7 +112,7 @@
 
             // Credenciales y Redirecciones
             const credenciales = {
-                ADMIN: { pass: 'ADMIN123', target: 'dashboard_admin.html' }, // Redirección para el jefe
+                ADMIN: { pass: 'ADMIN123', target: '/interfazadministrador' }, // Redirección para el jefe
                 GIANCARLO: { pass: 'GIANCARLO1', target: '/interfazusuario' } // Redirección para el usuario
             };
 
