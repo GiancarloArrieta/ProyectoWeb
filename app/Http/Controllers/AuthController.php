@@ -16,8 +16,8 @@ class AuthController extends Controller
     {
         // 1. Validación de Datos (Primer paso crucial de seguridad)
         $request->validate([
-            'usuario'    => 'required|string|max:30',
-            'contrasena' => 'required|string|min:6', // Asegúrate de que la longitud mínima es segura
+            'usuario'    => 'required|string',
+            'contrasena' => 'required|string',
         ]);
 
         // 2. Preparación de Credenciales para el intento de Login
