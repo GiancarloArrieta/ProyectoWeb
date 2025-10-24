@@ -2,51 +2,67 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Usuario;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth; // Facade para la autenticación
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 
 class AuthController extends Controller
 {
     /**
+     * Mostrar el formulario de login
+     */
+    public function showLogin()
+    {
+        return view('inicioSesion');
+    }
+
+    /**
      * Procesa la solicitud POST para autenticar al usuario.
-     * * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
      */
     public function authenticate(Request $request)
     {
-        // 1. Validación de Datos (Primer paso crucial de seguridad)
         $request->validate([
             'usuario'    => 'required|string',
             'contrasena' => 'required|string',
         ]);
 
-        // 2. Preparación de Credenciales para el intento de Login
-        // Nota: Laravel espera 'password' para el campo de contraseña, 
-        // por lo que mapeamos 'contrasena' a 'password' en este array.
-        $credentials = [
-            'usuario'  => $request->input('usuario'),
-            'password' => $request->input('contrasena'), // Laravel maneja el hash
-        ];
+        // Buscar usuario por correo
+        $usuario = Usuario::where('correo', $request->usuario)->first();
 
-        // 3. Intento de Autenticación (El archivo PHP que hace la consulta)
-        // **Este es el paso que genera la consulta y verifica la coincidencia en la BD.**
-        if (Auth::attempt($credentials)) {
-            
-            // 3.1. Autenticación Exitosa: Se encontró coincidencia en la BD
-            
-            // Regenerar la sesión (seguridad)
+        if ($usuario && Hash::check($request->contrasena, $usuario->contreseña)) {
+            // Autenticación exitosa
+            Auth::login($usuario);
             $request->session()->regenerate();
 
-            // Redirigir a una nueva vista
-            return redirect()->intended('/dashboard'); 
+            // Redirigir según el rol
+            $rol = $usuario->rol->nombre ?? 'usuario';
+            
+            switch ($rol) {
+                case 'admin':
+                case 'jefe':
+                    return redirect()->intended('/interfazadministrador');
+                case 'auxiliar':
+                    return redirect()->intended('/interfazsoporte');
+                default:
+                    return redirect()->intended('/interfazusuario');
+            }
+        }
 
-        } 
-        
-        // 4. Coincidencia Fallida: No se encontró el usuario o la contraseña no coincide
-        
-        // Retornar al formulario con un mensaje de error
         return back()->withErrors([
             'usuario' => 'Las credenciales no son válidas. Verifique su usuario y contraseña.',
-        ])->onlyInput('usuario'); 
+        ])->onlyInput('usuario');
+    }
+
+    /**
+     * Cerrar sesión
+     */
+    public function logout(Request $request)
+    {
+        Auth::logout();
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+        
+        return redirect('/iniciosesion');
     }
 }

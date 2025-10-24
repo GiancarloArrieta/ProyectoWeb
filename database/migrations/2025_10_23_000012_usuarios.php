@@ -14,10 +14,11 @@ return new class extends Migration
         Schema::create('usuarios', function (Blueprint $table) {
             $table->id();
             $table->string('nombre');
-            $table->string('correo');
+            $table->string('correo')->unique();
             $table->string('contreseña');
             $table->foreignId('id_rol')->constrained('roles');
             $table->foreignId('id_departamento')->constrained('departamentos');
+            $table->timestamps();
         });
     }
     /**

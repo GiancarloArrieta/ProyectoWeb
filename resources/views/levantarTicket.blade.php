@@ -13,7 +13,24 @@
             
             <h2>✍️ Levantar Nuevo Ticket de Soporte</h2>
             
-            <form method="POST" action="/api/tickets/store">
+            @if ($errors->any())
+                <div style="background-color: #f8d7da; color: #721c24; padding: 10px; margin-bottom: 15px; border-radius: 4px;">
+                    <ul style="margin: 0; padding-left: 20px;">
+                        @foreach ($errors->all() as $error)
+                            <li>{{ $error }}</li>
+                        @endforeach
+                    </ul>
+                </div>
+            @endif
+
+            @if (session('success'))
+                <div style="background-color: #d4edda; color: #155724; padding: 10px; margin-bottom: 15px; border-radius: 4px;">
+                    {{ session('success') }}
+                </div>
+            @endif
+            
+            <form method="POST" action="{{ route('ticket.store') }}">
+                @csrf
                 
                 <div>
                     <label for="ticket_title">Título o Asunto del Problema:</label>
@@ -23,7 +40,8 @@
                         name="title" 
                         placeholder="Ej: La impresora no funciona en el área de Ventas" 
                         required 
-                        maxlength="100">
+                        maxlength="100"
+                        value="{{ old('title') }}">
                 </div>
                 
                 <div>
@@ -33,14 +51,15 @@
                         name="description" 
                         rows="7" 
                         placeholder="Describa qué sucede, cuándo comenzó, si aparece algún mensaje de error y qué pasos ha tomado para intentar resolverlo." 
-                        required>
-                    </textarea>
+                        required>{{ old('description') }}</textarea>
                 </div>
                 
                 <div class="btn-group">
-                    <button type="button" onclick="window.history.back()" class="btn-close">
-                        Cancelar y Cerrar
-                    </button>
+                    <a href="{{ route('usuario.profile') }}" class="btn-close" style="text-decoration: none; color: inherit;">
+                        <button type="button">
+                            Cancelar y Cerrar
+                        </button>
+                    </a>
                     <button type="submit" class="btn-submit">
                         Enviar Solicitud
                     </button>

@@ -15,10 +15,20 @@
 </head>
 <body>
     <header>
-        <h1>Bienvenido(a), [Nombre del Usuario]</h1>
-            <button type="button" onclick="window.history.back()" class="btn-close">
-                        Cerrar
-            </button>
+        <h1>Bienvenido(a), {{ $usuario->nombre ?? 'Usuario' }}</h1>
+        <div>
+            <a href="{{ route('usuario.edit') }}" style="margin-right: 10px; text-decoration: none;">
+                <button type="button" style="background-color: #3498db; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer;">
+                    Editar Perfil
+                </button>
+            </a>
+            <form method="POST" action="{{ route('logout') }}" style="display: inline;">
+                @csrf
+                <button type="submit" class="btn-close">
+                    Cerrar Sesión
+                </button>
+            </form>
+        </div>
     </header>
 
     <main style="display: flex; gap: 30px; margin-top: 20px;">
@@ -31,17 +41,17 @@
             </div>
 
             <div>
-                <p><strong>Nombre:</strong> [Nombre Completo del Usuario]</p>
-                <p><strong>Email:</strong> [Email del Usuario]</p>
+                <p><strong>Nombre:</strong> {{ $usuario->nombre ?? 'No disponible' }}</p>
+                <p><strong>Email:</strong> {{ $usuario->correo ?? 'No disponible' }}</p>
                 
                 <p style="border-top: 1px solid #ddd; padding-top: 10px;">
-                    <strong>Departamento:</strong> [Departamento Asignado] 
+                    <strong>Departamento:</strong> {{ $usuario->departamento_nombre ?? 'No asignado' }}
                 </p>
                 <p>
-                    <strong>Puesto:</strong> [Puesto del Empleado]
+                    <strong>Puesto:</strong> {{ $usuario->rol_nombre ?? 'No asignado' }}
                 </p>
                 
-                <a href="/editarInformacionUsuario" style="text-decoration: none;">
+                <a href="{{ route('usuario.edit') }}" style="text-decoration: none;">
                     <button type="button">
                         Editar Datos Personales
                     </button>
@@ -52,7 +62,7 @@
         <section id="user-tickets" style="width: 70%; border: 1px solid #ccc; padding: 20px; background: white;">
             <h2>Gestión de Tickets</h2>
             
-            <a href="/levantarTicket" style="text-decoration: none;">
+            <a href="{{ route('ticket.create') }}" style="text-decoration: none;">
                 <button type="button">
                     + Levantar Nuevo Ticket
                 </button>
@@ -71,7 +81,8 @@
                         <th>Acción</th>
                     </tr>
                 </thead>
-                <tbody>
+                <tbody id="tickets-table-body">
+                    <!-- Los tickets se cargarán aquí via JavaScript -->
                 </tbody>
             </table>
         </section>
@@ -79,5 +90,53 @@
     
     <div id="modal-nuevo-ticket" style="display:none;">
          </div>
+
+    <script>
+        // Cargar tickets del usuario al cargar la página
+        document.addEventListener('DOMContentLoaded', function() {
+            cargarTickets();
+        });
+
+        function cargarTickets() {
+            fetch('{{ route("ticket.mis-tickets") }}')
+                .then(response => response.json())
+                .then(tickets => {
+                    const tbody = document.getElementById('tickets-table-body');
+                    tbody.innerHTML = '';
+
+                    if (tickets.length === 0) {
+                        tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 20px;">No tienes tickets registrados</td></tr>';
+                        return;
+                    }
+
+                    tickets.forEach(ticket => {
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td>${ticket.id}</td>
+                            <td>${new Date(ticket.created_at).toLocaleDateString()}</td>
+                            <td>${ticket.título}</td>
+                            <td>${ticket.departamento_asignado ? ticket.departamento_asignado.nombre : 'Sin asignar'}</td>
+                            <td><span style="padding: 4px 8px; border-radius: 4px; background-color: ${getStatusColor(ticket.status)}; color: white;">${ticket.status}</span></td>
+                            <td><a href="/detalleticket/${ticket.id}" style="text-decoration: none; color: #3498db;">Ver Detalles</a></td>
+                        `;
+                        tbody.appendChild(row);
+                    });
+                })
+                .catch(error => {
+                    console.error('Error al cargar tickets:', error);
+                    document.getElementById('tickets-table-body').innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 20px; color: red;">Error al cargar tickets</td></tr>';
+                });
+        }
+
+        function getStatusColor(status) {
+            switch(status) {
+                case 'Pendiente': return '#f39c12';
+                case 'En Proceso': return '#3498db';
+                case 'Resuelto': return '#2ecc71';
+                case 'Cerrado': return '#95a5a6';
+                default: return '#95a5a6';
+            }
+        }
+    </script>
 </body>
 </html>

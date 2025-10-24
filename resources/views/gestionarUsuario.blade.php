@@ -24,17 +24,34 @@
         <section id="crear-usuario">
             <h3>➕ Crear Nuevo Empleado</h3>
             
-            <form method="POST" action="/admin/usuarios/store">
+            <form method="POST" action="{{ route('usuarios.store') }}">
+                @csrf
+                
+                @if ($errors->any())
+                    <div style="background-color: #f8d7da; color: #721c24; padding: 10px; margin-bottom: 15px; border-radius: 4px;">
+                        <ul style="margin: 0; padding-left: 20px;">
+                            @foreach ($errors->all() as $error)
+                                <li>{{ $error }}</li>
+                            @endforeach
+                        </ul>
+                    </div>
+                @endif
+
+                @if (session('success'))
+                    <div style="background-color: #d4edda; color: #155724; padding: 10px; margin-bottom: 15px; border-radius: 4px;">
+                        {{ session('success') }}
+                    </div>
+                @endif
                 
                 <div>
                     <div>
                         <label for="nombre_completo">Nombre Completo:</label>
-                        <input type="text" id="nombre_completo" name="name" required placeholder="Ej: Juan Pérez">
+                        <input type="text" id="nombre_completo" name="name" required placeholder="Ej: Juan Pérez" value="{{ old('name') }}">
                     </div>
 
                     <div>
                         <label for="email">Email (Usuario de Login):</label>
-                        <input type="email" id="email" name="email" required placeholder="ejuan@dulcesricos.com">
+                        <input type="email" id="email" name="email" required placeholder="ejuan@dulcesricos.com" value="{{ old('email') }}">
                     </div>
                 </div>
 
@@ -55,9 +72,11 @@
                         <label for="rol">Asignar Rol:</label>
                         <select id="rol" name="role" required>
                             <option value="">Seleccione un Rol</option>
-                            <option value="usuario">Usuario (Empleado)</option>
-                            <option value="auxiliar">Auxiliar de Soporte</option>
-                            <option value="jefe">Jefe de Soporte</option>
+                            @foreach($roles as $rol)
+                                <option value="{{ $rol->id }}" {{ old('role') == $rol->id ? 'selected' : '' }}>
+                                    {{ $rol->nombre }}
+                                </option>
+                            @endforeach
                         </select>
                     </div>
 
@@ -65,8 +84,11 @@
                         <label for="departamento">Asignar Departamento:</label>
                         <select id="departamento" name="department_id" required>
                             <option value="">Seleccione un Departamento</option>
-                            <option value="1">Ventas</option>
-                            <option value="2">Producción</option>
+                            @foreach($departamentos as $departamento)
+                                <option value="{{ $departamento->id }}" {{ old('department_id') == $departamento->id ? 'selected' : '' }}>
+                                    {{ $departamento->nombre }}
+                                </option>
+                            @endforeach
                         </select>
                     </div>
                 </div>
@@ -99,7 +121,25 @@
                     </tr>
                 </thead>
                 <tbody>
-                    
+                    @forelse($usuarios as $usuario)
+                        <tr>
+                            <td>{{ $usuario->id }}</td>
+                            <td>{{ $usuario->nombre }}</td>
+                            <td>{{ $usuario->correo }}</td>
+                            <td>{{ $usuario->rol_nombre }}</td>
+                            <td>{{ $usuario->departamento_nombre }}</td>
+                            <td>
+                                <button onclick="editarUsuario({{ $usuario->id }})">Editar</button>
+                                <button onclick="eliminarUsuario({{ $usuario->id }})" style="background-color: #e74c3c;">Eliminar</button>
+                            </td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="6" style="text-align: center; padding: 20px;">
+                                No hay usuarios registrados
+                            </td>
+                        </tr>
+                    @endforelse
                 </tbody>
             </table>
         </section>
