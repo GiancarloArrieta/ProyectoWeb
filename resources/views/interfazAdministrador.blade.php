@@ -84,26 +84,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <tr>
-                            <td>1004</td>
-                            <td>2025-10-22</td>
-                            <td>Usuario X</td>
-                            <td>Fallo de conexión en almacén</td>
-                            <td><span style="color: orange;">Pendiente</span></td>
-                            <td>-- Sin Asignar --</td>
-                            <td>
-                                <button type="button" class="btn-action">Asignar Auxiliar</button>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>1003</td>
-                            <td>2025-10-10</td>
-                            <td>Usuario Z</td>
-                            <td>Problema de red</td>
-                            <td><span style="color: green;">Finalizado</span></td>
-                            <td>María García</td>
-                            <td><button type="button" class="btn-action" style="background-color: #34495e;">Ver Detalle</button></td>
-                        </tr>
+                    
                     </tbody>
                 </table>
             </section>
