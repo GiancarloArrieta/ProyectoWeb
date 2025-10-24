@@ -22,7 +22,7 @@
                 
                 <div class="form-group">
                     <label for="usuario" class="form-label">
-                        Usuario
+                        Email
                     </label>
                     <div class="input-container">
                         <input 
