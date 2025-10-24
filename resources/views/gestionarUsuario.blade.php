@@ -99,38 +99,7 @@
                     </tr>
                 </thead>
                 <tbody>
-                    <tr>
-                        <td>1</td>
-                        <td>Juan Pérez</td>
-                        <td>juan.perez@dulcesricos.com</td>
-                        <td>Auxiliar de Soporte</td>
-                        <td>Tecnología</td>
-                        <td>
-                            <button type="button" onclick="editarUsuario(1)">Editar</button>
-                            <button type="button" onclick="eliminarUsuario(1)">Eliminar</button>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>2</td>
-                        <td>María García</td>
-                        <td>maria.garcia@dulcesricos.com</td>
-                        <td>Usuario</td>
-                        <td>Ventas</td>
-                        <td>
-                            <button type="button" onclick="editarUsuario(2)">Editar</button>
-                            <button type="button" onclick="eliminarUsuario(2)">Eliminar</button>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>3</td>
-                        <td>[Nombre del Jefe]</td>
-                        <td>admin@dulcesricos.com</td>
-                        <td>Jefe de Soporte</td>
-                        <td>Tecnología</td>
-                        <td>
-                            <button type="button" onclick="editarUsuario(3)">Editar</button>
-                            </td>
-                    </tr>
+                    
                 </tbody>
             </table>
         </section>
