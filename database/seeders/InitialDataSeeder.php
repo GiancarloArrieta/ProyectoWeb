@@ -17,10 +17,9 @@ class InitialDataSeeder extends Seeder
     {
         // Crear roles
         $roles = [
-            ['nombre' => 'admin'],
-            ['nombre' => 'jefe'],
-            ['nombre' => 'auxiliar'],
-            ['nombre' => 'usuario'],
+            ['nombre' => 'Administrador'],
+            ['nombre' => 'Usuario'],
+            ['nombre' => 'Auxiliar'],
         ];
 
         foreach ($roles as $rol) {
@@ -40,7 +39,7 @@ class InitialDataSeeder extends Seeder
         }
 
         // Crear usuario administrador
-        $adminRol = Rol::where('nombre', 'admin')->first();
+        $adminRol = Rol::where('nombre', 'Administrador')->first();
         $adminDept = Departamento::where('nombre', 'Administración')->first();
 
         Usuario::firstOrCreate(
@@ -55,7 +54,7 @@ class InitialDataSeeder extends Seeder
         );
 
         // Crear usuario de soporte
-        $auxiliarRol = Rol::where('nombre', 'auxiliar')->first();
+        $auxiliarRol = Rol::where('nombre', 'Auxiliar')->first();
         $soporteDept = Departamento::where('nombre', 'Soporte Técnico')->first();
 
         Usuario::firstOrCreate(
@@ -70,7 +69,7 @@ class InitialDataSeeder extends Seeder
         );
 
         // Crear usuario regular
-        $usuarioRol = Rol::where('nombre', 'usuario')->first();
+        $usuarioRol = Rol::where('nombre', 'Usuario')->first();
         $ventasDept = Departamento::where('nombre', 'Ventas')->first();
 
         Usuario::firstOrCreate(

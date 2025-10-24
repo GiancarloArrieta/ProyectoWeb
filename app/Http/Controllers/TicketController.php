@@ -67,4 +67,28 @@ class TicketController extends Controller
         $ticket = Ticket::with(['usuario', 'departamentoAsignado'])->findOrFail($id);
         return view('detallesTicket', compact('ticket'));
     }
+
+    /**
+     * Eliminar un ticket
+     */
+    public function destroy($id)
+    {
+        $usuario = auth()->user();
+        $ticket = Ticket::where('id', $id)
+                       ->where('id_usuario', $usuario->id)
+                       ->first();
+
+        if (!$ticket) {
+            return response()->json(['success' => false, 'message' => 'Ticket no encontrado'], 404);
+        }
+
+        // Solo permitir eliminar tickets con estado "Pendiente"
+        if ($ticket->status !== 'Pendiente') {
+            return response()->json(['success' => false, 'message' => 'Solo se pueden eliminar tickets pendientes'], 400);
+        }
+
+        $ticket->delete();
+
+        return response()->json(['success' => true, 'message' => 'Ticket eliminado exitosamente']);
+    }
 }

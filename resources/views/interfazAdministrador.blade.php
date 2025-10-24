@@ -9,9 +9,12 @@
     
     <header>
         <h1>Panel de Jefe de Soporte</h1>
-        <button type="button" onclick="window.history.back()" class="btn-close">
-                        Cerrar
-            </button>
+        <form method="POST" action="{{ route('logout') }}" style="display: inline;">
+                @csrf
+                <button type="submit" class="btn-close">
+                    Cerrar Sesión
+                </button>
+        </form>
     </header>
 
     <div class="admin-layout">
@@ -19,7 +22,7 @@
         <aside>
             <h3>Gestión del Sistema</h3>
             <nav>
-                <a href="#gestionar-usuarios">👥 Crear Usuarios y Roles</a>
+                <a href="/gestionarusuarios">👥 Crear Usuarios y Roles</a>
                 
                 <a href="#gestionar-departamentos">🏢 Administrar Departamentos</a>
                 

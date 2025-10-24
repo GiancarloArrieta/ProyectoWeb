@@ -36,13 +36,12 @@ class AuthController extends Controller
             $request->session()->regenerate();
 
             // Redirigir según el rol
-            $rol = $usuario->rol->nombre ?? 'usuario';
+            $rol = $usuario->rol->nombre ?? 'Usuario';
             
             switch ($rol) {
-                case 'admin':
-                case 'jefe':
+                case 'Administrador':
                     return redirect()->intended('/interfazadministrador');
-                case 'auxiliar':
+                case 'Auxiliar':
                     return redirect()->intended('/interfazsoporte');
                 default:
                     return redirect()->intended('/interfazusuario');

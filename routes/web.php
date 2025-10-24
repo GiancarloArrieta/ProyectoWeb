@@ -28,6 +28,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/api/tickets/store', [TicketController::class, 'store'])->name('ticket.store');
     Route::get('/api/tickets/mis-tickets', [TicketController::class, 'misTickets'])->name('ticket.mis-tickets');
     Route::get('/detalleticket/{id}', [TicketController::class, 'show'])->name('ticket.show');
+    Route::delete('/api/tickets/{id}', [TicketController::class, 'destroy'])->name('ticket.destroy');
     
     // Rutas de administración
     Route::get('/gestionarusuarios', [UsuarioController::class, 'index'])->name('usuarios.index');

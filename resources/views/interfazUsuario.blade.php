@@ -2,6 +2,7 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>Panel de Empleado - Dulces Ricos</title>
     <style>
         body { font-family: Arial, sans-serif; background-color: #f4f7f9; padding: 20px; }
@@ -17,11 +18,6 @@
     <header>
         <h1>Bienvenido(a), {{ $usuario->nombre ?? 'Usuario' }}</h1>
         <div>
-            <a href="{{ route('usuario.edit') }}" style="margin-right: 10px; text-decoration: none;">
-                <button type="button" style="background-color: #3498db; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer;">
-                    Editar Perfil
-                </button>
-            </a>
             <form method="POST" action="{{ route('logout') }}" style="display: inline;">
                 @csrf
                 <button type="submit" class="btn-close">
@@ -117,7 +113,7 @@
                             <td>${ticket.título}</td>
                             <td>${ticket.departamento_asignado ? ticket.departamento_asignado.nombre : 'Sin asignar'}</td>
                             <td><span style="padding: 4px 8px; border-radius: 4px; background-color: ${getStatusColor(ticket.status)}; color: white;">${ticket.status}</span></td>
-                            <td><a href="/detalleticket/${ticket.id}" style="text-decoration: none; color: #3498db;">Ver Detalles</a></td>
+                            <td>${getActionButton(ticket.status, ticket.id)}</td>
                         `;
                         tbody.appendChild(row);
                     });
@@ -132,9 +128,45 @@
             switch(status) {
                 case 'Pendiente': return '#f39c12';
                 case 'En Proceso': return '#3498db';
-                case 'Resuelto': return '#2ecc71';
+                case 'Completado': return '#2ecc71';
                 case 'Cerrado': return '#95a5a6';
                 default: return '#95a5a6';
+            }
+        }
+
+        function getActionButton(status, ticketId) {
+            switch(status) {
+                case 'Pendiente':
+                    return `<button onclick="eliminarTicket(${ticketId})" style="background-color: #e74c3c; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer;">Eliminar</button>`;
+                case 'En Proceso':
+                case 'Completado':
+                    return '<span style="color: #95a5a6;">No disponible</span>';
+                default:
+                    return '<span style="color: #95a5a6;">No disponible</span>';
+            }
+        }
+
+        function eliminarTicket(ticketId) {
+            if (confirm('¿Estás seguro de que quieres eliminar este ticket?')) {
+                // Aquí puedes implementar la lógica para eliminar el ticket
+                fetch(`/api/tickets/${ticketId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        cargarTickets(); // Recargar la tabla
+                    } else {
+                        alert('Error al eliminar el ticket');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Error al eliminar el ticket');
+                });
             }
         }
     </script>
