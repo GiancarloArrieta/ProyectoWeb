@@ -41,7 +41,7 @@
                     <strong>Puesto:</strong> [Puesto del Empleado]
                 </p>
                 
-                <a href="editarInformacionUsuario.blade.php" style="text-decoration: none;">
+                <a href="/editarInformacionUsuario" style="text-decoration: none;">
                     <button type="button">
                         Editar Datos Personales
                     </button>
@@ -52,7 +52,7 @@
         <section id="user-tickets" style="width: 70%; border: 1px solid #ccc; padding: 20px; background: white;">
             <h2>Gestión de Tickets</h2>
             
-            <a href="levantarTicket.blade.php" style="text-decoration: none;">
+            <a href="/levantarTicket" style="text-decoration: none;">
                 <button type="button">
                     + Levantar Nuevo Ticket
                 </button>
@@ -72,40 +72,6 @@
                     </tr>
                 </thead>
                 <tbody>
-                    <tr>
-                        <td>1001</td>
-                        <td>2025-10-15</td>
-                        <td>Falla de impresora</td>
-                        <td>PENDIENTE DE ASIGNAR</td>
-                        <td>
-                            <span style="font-weight: bold; color: orange;">Pendiente</span>
-                        </td>
-                        <td>
-                            <button type="button" style="color: red;">
-                                Cancelar Ticket
-                            </button>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>1002</td>
-                        <td>2025-10-14</td>
-                        <td>Error de software</td>
-                        <td>Juan Pérez (Auxiliar)</td>
-                        <td>
-                            <span style="font-weight: bold; color: blue;">En proceso</span>
-                        </td>
-                        <td>No disponible</td>
-                    </tr>
-                    <tr>
-                        <td>1003</td>
-                        <td>2025-10-10</td>
-                        <td>Problema de red</td>
-                        <td>María García (Auxiliar)</td>
-                        <td>
-                            <span style="font-weight: bold; color: green;">Finalizado</span>
-                        </td>
-                        <td>No disponible</td>
-                    </tr>
                 </tbody>
             </table>
         </section>
