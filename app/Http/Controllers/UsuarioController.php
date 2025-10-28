@@ -40,18 +40,60 @@ class UsuarioController extends Controller
             return back()->withErrors($validator)->withInput();
         }
 
-        // Crear el rol si no existe
-        $rol = Rol::firstOrCreate(['nombre' => $request->role]);
-
         Usuario::create([
             'nombre' => $request->name,
             'correo' => $request->email,
             'contreseña' => Hash::make($request->password),
-            'id_rol' => $rol->id,
+            'id_rol' => $request->role,
             'id_departamento' => $request->department_id,
         ]);
 
         return redirect()->route('usuarios.index')->with('success', 'Usuario creado exitosamente.');
+    }
+
+    /**
+     * Obtener información de un usuario específico
+     */
+    public function show($id)
+    {
+        $usuario = Usuario::with(['rol', 'departamento'])->findOrFail($id);
+        return response()->json($usuario);
+    }
+
+    /**
+     * Actualizar información de un usuario
+     */
+    public function update(Request $request, $id)
+    {
+        $usuario = Usuario::findOrFail($id);
+
+        $validator = Validator::make($request->all(), [
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|unique:usuarios,correo,' . $id,
+            'password' => 'nullable|string|min:6|confirmed',
+            'role' => 'required|exists:roles,id',
+            'department_id' => 'required|exists:departamentos,id',
+        ]);
+
+        if ($validator->fails()) {
+            return back()->withErrors($validator)->withInput();
+        }
+
+        $dataToUpdate = [
+            'nombre' => $request->name,
+            'correo' => $request->email,
+            'id_rol' => $request->role,
+            'id_departamento' => $request->department_id,
+        ];
+
+        // Solo actualizar la contraseña si se proporcionó una nueva
+        if ($request->filled('password')) {
+            $dataToUpdate['contreseña'] = Hash::make($request->password);
+        }
+
+        $usuario->update($dataToUpdate);
+
+        return redirect()->route('usuarios.index')->with('success', 'Usuario actualizado exitosamente.');
     }
 
     /**

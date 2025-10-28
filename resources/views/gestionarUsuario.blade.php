@@ -22,10 +22,12 @@
         </section>
 
         <section id="crear-usuario">
-            <h3>➕ Crear Nuevo Empleado</h3>
+            <h3 id="form-title">➕ Crear Nuevo Empleado</h3>
             
-            <form method="POST" action="{{ route('usuarios.store') }}">
+            <form id="usuario-form" method="POST" action="{{ route('usuarios.store') }}">
                 @csrf
+                <input type="hidden" id="usuario-id" name="usuario_id" value="">
+                <input type="hidden" id="form-method" name="_method" value="POST">
                 
                 @if ($errors->any())
                     <div style="background-color: #f8d7da; color: #721c24; padding: 10px; margin-bottom: 15px; border-radius: 4px;">
@@ -57,13 +59,13 @@
 
                 <div>
                     <div>
-                        <label for="password">Contraseña Inicial:</label>
-                        <input type="password" id="password" name="password" required>
+                        <label for="password">Contraseña <span id="password-hint">(Dejar en blanco para mantener la actual)</span>:</label>
+                        <input type="password" id="password" name="password">
                     </div>
 
                     <div>
                         <label for="password_confirmation">Confirmar Contraseña:</label>
-                        <input type="password" id="password_confirmation" name="password_confirmation" required>
+                        <input type="password" id="password_confirmation" name="password_confirmation">
                     </div>
                 </div>
                 
@@ -93,7 +95,10 @@
                     </div>
                 </div>
 
-                <button type="submit">Guardar Nuevo Usuario</button>
+                <div>
+                    <button type="submit" id="submit-button">Guardar Nuevo Usuario</button>
+                    <button type="button" id="cancel-button" onclick="cancelarEdicion()" style="display: none; background-color: #95a5a6;">Cancelar</button>
+                </div>
             </form>
         </section>
 
@@ -145,6 +150,106 @@
         </section>
 
     </main>
+
+    <script>
+        // Función para editar un usuario
+        async function editarUsuario(id) {
+            try {
+                // Obtener los datos del usuario
+                const response = await fetch(`/api/usuarios/${id}`);
+                if (!response.ok) {
+                    throw new Error('Error al obtener los datos del usuario');
+                }
+                
+                const usuario = await response.json();
+                
+                // Rellenar el formulario con los datos del usuario
+                document.getElementById('usuario-id').value = usuario.id;
+                document.getElementById('nombre_completo').value = usuario.nombre;
+                document.getElementById('email').value = usuario.correo;
+                document.getElementById('rol').value = usuario.id_rol;
+                document.getElementById('departamento').value = usuario.id_departamento;
+                
+                // Limpiar campos de contraseña
+                document.getElementById('password').value = '';
+                document.getElementById('password_confirmation').value = '';
+                
+                // Hacer que los campos de contraseña no sean requeridos
+                document.getElementById('password').removeAttribute('required');
+                document.getElementById('password_confirmation').removeAttribute('required');
+                
+                // Mostrar hint de contraseña
+                document.getElementById('password-hint').style.display = 'inline';
+                
+                // Cambiar el método del formulario a PUT
+                document.getElementById('form-method').value = 'PUT';
+                
+                // Cambiar la acción del formulario
+                document.getElementById('usuario-form').action = `/admin/usuarios/${id}`;
+                
+                // Cambiar el título del formulario
+                document.getElementById('form-title').textContent = '✏️ Editar Empleado';
+                
+                // Cambiar el texto del botón
+                document.getElementById('submit-button').textContent = 'Actualizar Usuario';
+                
+                // Mostrar botón de cancelar
+                document.getElementById('cancel-button').style.display = 'inline-block';
+                
+                // Hacer scroll al formulario
+                document.getElementById('crear-usuario').scrollIntoView({ behavior: 'smooth' });
+                
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error al cargar los datos del usuario');
+            }
+        }
+        
+        // Función para cancelar la edición y volver al modo creación
+        function cancelarEdicion() {
+            // Limpiar el formulario
+            document.getElementById('usuario-form').reset();
+            document.getElementById('usuario-id').value = '';
+            
+            // Restaurar el método POST
+            document.getElementById('form-method').value = 'POST';
+            
+            // Restaurar la acción del formulario
+            document.getElementById('usuario-form').action = '{{ route("usuarios.store") }}';
+            
+            // Restaurar el título
+            document.getElementById('form-title').textContent = '➕ Crear Nuevo Empleado';
+            
+            // Restaurar el texto del botón
+            document.getElementById('submit-button').textContent = 'Guardar Nuevo Usuario';
+            
+            // Ocultar botón de cancelar
+            document.getElementById('cancel-button').style.display = 'none';
+            
+            // Hacer que los campos de contraseña sean requeridos nuevamente
+            document.getElementById('password').setAttribute('required', 'required');
+            document.getElementById('password_confirmation').setAttribute('required', 'required');
+            
+            // Ocultar hint de contraseña
+            document.getElementById('password-hint').style.display = 'none';
+        }
+        
+        // Función para eliminar un usuario
+        function eliminarUsuario(id) {
+            if (confirm('¿Está seguro de que desea eliminar este usuario?')) {
+                // Aquí puedes implementar la lógica de eliminación
+                alert('Funcionalidad de eliminación pendiente de implementar');
+            }
+        }
+        
+        // Ocultar hint de contraseña por defecto al cargar la página
+        document.addEventListener('DOMContentLoaded', function() {
+            const passwordHint = document.getElementById('password-hint');
+            if (passwordHint) {
+                passwordHint.style.display = 'none';
+            }
+        });
+    </script>
 
 </body>
 </html>

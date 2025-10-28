@@ -8,7 +8,7 @@
 <body>
 
     <header>
-        <h1>Panel de Soporte Técnico - Bienvenido, [Nombre del Auxiliar]</h1>
+        <h1>Panel de Soporte Técnico - Bienvenido, {{ $usuario->nombre ?? 'Usuario' }}</h1>
         <a href="/iniciosesion">
             <button type="button">Cerrar</button>
         </a>

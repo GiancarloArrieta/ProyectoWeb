@@ -33,6 +33,8 @@ Route::middleware('auth')->group(function () {
     // Rutas de administración
     Route::get('/gestionarusuarios', [UsuarioController::class, 'index'])->name('usuarios.index');
     Route::post('/admin/usuarios/store', [UsuarioController::class, 'store'])->name('usuarios.store');
+    Route::get('/api/usuarios/{id}', [UsuarioController::class, 'show'])->name('usuarios.show');
+    Route::put('/admin/usuarios/{id}', [UsuarioController::class, 'update'])->name('usuarios.update');
     
     // Rutas de interfaces (mantener compatibilidad)
     Route::get('/interfazadministrador', function () {
@@ -40,6 +42,7 @@ Route::middleware('auth')->group(function () {
     });
     
     Route::get('/interfazsoporte', function () {
-        return view('interfazSoporte');
+        $usuario = auth()->user();
+        return view('interfazSoporte', compact('usuario'));
     });
 });
