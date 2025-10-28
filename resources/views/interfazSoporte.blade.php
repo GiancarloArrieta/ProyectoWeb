@@ -51,19 +51,7 @@
                     </tr>
                 </thead>
                 <tbody>
-                    <tr>
-                        <td>2001</td>
-                        <td>2025-10-25</td>
-                        <td>Usuario A</td>
-                        <td>Ventas</td>
-                        <td>No puedo acceder a la intranet</td>
-                        <td>Pendiente</td>
-                        <td>
-                            <a href="/detalleticket">
-                                <button type="button">Gestionar</button>
-                            </a>
-                        </td>
-                    </tr>
+                    
                 </tbody>
             </table>
         </section>
