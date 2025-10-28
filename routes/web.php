@@ -55,4 +55,24 @@ Route::middleware('auth')->group(function () {
         $usuario = auth()->user();
         return view('interfazSoporte', compact('usuario'));
     });
+
+    Route::get('/interfazadministrador', function () {
+        return view('interfazAdministrador');
+    });
+
+    Route::get('/interfazadministrador', function () {
+        return view('interfazAdministrador');
+    });
+
+    Route::get('/administrardepartamentos', function () {
+        return view('administrarDepartamentos');
+    });
+
+    Route::get('/gestionauxiliares', function () {
+        return view('gestionAuxiliares');
+    });
+
+    Route::get('/reportesestadisticas', function () {
+        return view('reportesEstadisticas');
+    });
 });

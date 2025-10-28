@@ -24,11 +24,11 @@
             <nav>
                 <a href="/gestionarusuarios">👥 Crear Usuarios y Roles</a>
                 
-                <a href="#gestionar-departamentos">🏢 Administrar Departamentos</a>
+                <a href="/administrardepartamentos">🏢 Administrar Departamentos</a>
                 
-                <a href="#gestionar-auxiliares">🛠️ Gestión de Auxiliares</a>
+                <a href="/gestionauxiliares">🛠️ Gestión de Auxiliares</a>
                 
-                <a href="#reportes-graficas">📈 Reportes y Estadísticas</a>
+                <a href="/reportesestadisticas">📈 Reportes y Estadísticas</a>
             </nav>
         </aside>
 
