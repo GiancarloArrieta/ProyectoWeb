@@ -18,9 +18,11 @@ Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 Route::middleware('auth')->group(function () {
     // Rutas del usuario
     Route::get('/interfazusuario', [UsuarioController::class, 'profile'])->name('usuario.profile');
-    Route::get('/editarInformacionUsuario', function () {
-        return view('editarInformacionUsuario');
-    })->name('usuario.edit');
+    
+    // RUTA DE EDICIÓN: Ahora apunta al método 'edit' en UsuarioController
+    Route::get('/editarinformacionusuario', [UsuarioController::class, 'edit'])->name('usuario.edit'); 
+    
+    // RUTA DE ACTUALIZACIÓN: Ya existía y apunta al método 'updateProfile' (lo usaremos para guardar la imagen)
     Route::post('/profile/update', [UsuarioController::class, 'updateProfile'])->name('usuario.update');
     
     // Rutas de tickets
@@ -54,14 +56,6 @@ Route::middleware('auth')->group(function () {
     Route::get('/interfazsoporte', function () {
         $usuario = auth()->user();
         return view('interfazSoporte', compact('usuario'));
-    });
-
-    Route::get('/interfazadministrador', function () {
-        return view('interfazAdministrador');
-    });
-
-    Route::get('/interfazadministrador', function () {
-        return view('interfazAdministrador');
     });
 
     Route::get('/administrardepartamentos', function () {

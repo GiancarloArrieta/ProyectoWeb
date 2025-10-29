@@ -8,6 +8,7 @@ use App\Models\Departamento;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Storage; // <-- NUEVA IMPORTACIÓN NECESARIA
 
 class UsuarioController extends Controller
 {
@@ -61,7 +62,7 @@ class UsuarioController extends Controller
     }
 
     /**
-     * Actualizar información de un usuario
+     * Actualizar información de un usuario (Desde el panel de administración)
      */
     public function update(Request $request, $id)
     {
@@ -97,7 +98,7 @@ class UsuarioController extends Controller
     }
 
     /**
-     * Mostrar información del usuario autenticado
+     * Mostrar información del usuario autenticado (interfazUsuario)
      */
     public function profile()
     {
@@ -106,35 +107,58 @@ class UsuarioController extends Controller
     }
 
     /**
-     * Actualizar perfil del usuario
+     * [NUEVO] Mostrar la vista para editar la información del usuario autenticado
+     * Corresponde a la ruta 'usuario.edit'
+     */
+    public function edit()
+    {
+        // La vista usa auth()->user() directamente para obtener los datos
+        return view('editarInformacionUsuario');
+    }
+
+    /**
+     * Actualizar perfil del usuario y manejar la foto de perfil
+     * Corresponde a la ruta 'usuario.update'
      */
     public function updateProfile(Request $request)
     {
         $usuario = auth()->user();
 
+        // 1. Validación (Usando el límite de 5MB que es mejor para imágenes de perfil)
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255',
+            // Verifica que el email sea único, excluyendo el correo actual del usuario
             'email' => 'required|email|unique:usuarios,correo,' . $usuario->id,
-            'profile_photo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            // Permite jpg, png, gif y max 5MB (5120 KB)
+            'profile_photo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:5120', 
         ]);
 
         if ($validator->fails()) {
             return back()->withErrors($validator)->withInput();
         }
 
-        $usuario->update([
-            'nombre' => $request->name,
-            'correo' => $request->email,
-        ]);
-
-        // Manejar la foto de perfil si se subió
+        // 2. Manejo de la Foto de Perfil
         if ($request->hasFile('profile_photo')) {
-            $file = $request->file('profile_photo');
-            $filename = time() . '_' . $file->getClientOriginalName();
-            $file->storeAs('public/profile_photos', $filename);
-            // Aquí podrías guardar la ruta en la base de datos si tienes un campo para eso
+            
+            // Eliminar la foto antigua si existe en el disco 'public'
+            if ($usuario->profile_photo && Storage::disk('public')->exists($usuario->profile_photo)) {
+                Storage::disk('public')->delete($usuario->profile_photo);
+            }
+
+            // Guardar la nueva foto en storage/app/public/profiles
+            // y obtener la ruta relativa (e.g., 'profiles/imagen.jpg')
+            $path = $request->file('profile_photo')->store('profiles', 'public');
+            $usuario->profile_photo = $path; // Guardar la nueva ruta en la columna 'profile_photo'
         }
 
-        return redirect()->route('usuario.profile')->with('success', 'Perfil actualizado exitosamente.');
+        // 3. Actualización de datos (nombre y email)
+        $usuario->nombre = $request->name;
+        $usuario->correo = $request->email;
+        
+        // 4. Guardar cambios en la base de datos
+        $usuario->save();
+
+        // Redirigir a la vista de edición con un mensaje de éxito
+        return redirect()->route('usuario.edit')->with('success', '¡Perfil actualizado con éxito, incluyendo la foto!');
     }
 }

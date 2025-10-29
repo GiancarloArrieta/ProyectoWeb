@@ -18,6 +18,7 @@ class Usuario extends Authenticatable
         'contreseña',
         'id_rol',
         'id_departamento',
+        'profile_photo',
     ];
 
     protected $hidden = [
