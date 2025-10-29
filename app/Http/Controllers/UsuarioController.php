@@ -8,7 +8,7 @@ use App\Models\Departamento;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
-use Illuminate\Support\Facades\Storage; // <-- NUEVA IMPORTACIÓN NECESARIA
+use Illuminate\Support\Facades\Storage; // NECESARIO
 
 class UsuarioController extends Controller
 {
@@ -107,29 +107,24 @@ class UsuarioController extends Controller
     }
 
     /**
-     * [NUEVO] Mostrar la vista para editar la información del usuario autenticado
-     * Corresponde a la ruta 'usuario.edit'
+     * Mostrar la vista para editar la información del usuario autenticado
      */
     public function edit()
     {
-        // La vista usa auth()->user() directamente para obtener los datos
         return view('editarInformacionUsuario');
     }
 
     /**
      * Actualizar perfil del usuario y manejar la foto de perfil
-     * Corresponde a la ruta 'usuario.update'
      */
     public function updateProfile(Request $request)
     {
         $usuario = auth()->user();
 
-        // 1. Validación (Usando el límite de 5MB que es mejor para imágenes de perfil)
+        // 1. Validación
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255',
-            // Verifica que el email sea único, excluyendo el correo actual del usuario
             'email' => 'required|email|unique:usuarios,correo,' . $usuario->id,
-            // Permite jpg, png, gif y max 5MB (5120 KB)
             'profile_photo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:5120', 
         ]);
 
@@ -145,10 +140,9 @@ class UsuarioController extends Controller
                 Storage::disk('public')->delete($usuario->profile_photo);
             }
 
-            // Guardar la nueva foto en storage/app/public/profiles
-            // y obtener la ruta relativa (e.g., 'profiles/imagen.jpg')
+            // Guardar la nueva foto
             $path = $request->file('profile_photo')->store('profiles', 'public');
-            $usuario->profile_photo = $path; // Guardar la nueva ruta en la columna 'profile_photo'
+            $usuario->profile_photo = $path;
         }
 
         // 3. Actualización de datos (nombre y email)
@@ -158,7 +152,8 @@ class UsuarioController extends Controller
         // 4. Guardar cambios en la base de datos
         $usuario->save();
 
-        // Redirigir a la vista de edición con un mensaje de éxito
-        return redirect()->route('usuario.edit')->with('success', '¡Perfil actualizado con éxito, incluyendo la foto!');
+        // **CAMBIO SOLICITADO:** Redirige a la vista de perfil
+        return redirect()->route('usuario.profile')->with('success', '¡Perfil actualizado con éxito, incluyendo la foto!');
     }
 }
+
