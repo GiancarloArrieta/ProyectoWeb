@@ -420,7 +420,7 @@
                     <option value="todos">Todos los Roles</option>
                     <option value="auxiliar">Auxiliares</option>
                     <option value="usuario">Empleados Regulares</option>
-                    <option value="jefe_soporte">Jefes de Soporte</option>
+                    <option value="administrador">Jefes de Soporte</option>
                 </select>
             </div>
 
@@ -576,13 +576,19 @@
                 const fila = filas[i];
                 // Ignorar la fila 'No hay usuarios'
                 if (fila.hasAttribute('data-rol')) { 
-                    const rol = fila.getAttribute('data-rol');
+                    const rol = fila.getAttribute('data-rol').toLowerCase();
+                    let mostrar = false;
                     
-                    if (filtro === 'todos' || rol.includes(filtro)) {
-                        fila.style.display = '';
+                    if (filtro === 'todos') {
+                        mostrar = true;
+                    } else if (filtro === 'administrador') {
+                        // Mostrar usuarios con rol "Administrador" o "administrador"
+                        mostrar = rol === 'administrador';
                     } else {
-                        fila.style.display = 'none';
+                        mostrar = rol.includes(filtro);
                     }
+                    
+                    fila.style.display = mostrar ? '' : 'none';
                 }
             }
         }

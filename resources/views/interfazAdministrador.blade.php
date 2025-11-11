@@ -165,21 +165,116 @@
         /* ------------------------------------- */
         .charts-section {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 20px;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 25px;
+            margin-top: 20px;
         }
+        
         .chart-placeholder {
             background-color: white;
-            border: 2px dashed var(--color-warm-accent);
-            border-radius: 8px;
-            padding: 40px 20px;
-            text-align: center;
-            color: #7f8c8d;
-            height: 150px;
+            border: 2px solid #ffeaa7;
+            border-radius: 12px;
+            padding: 0;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            overflow: hidden;
             display: flex;
-            justify-content: center;
-            align-items: center;
+            flex-direction: column;
+            min-height: 200px;
+        }
+        
+        .chart-placeholder h4 {
+            margin: 0;
+            padding: 18px 20px;
+            background-color: var(--color-dark-primary);
+            color: white;
+            font-size: 1.1em;
             font-weight: 600;
+            border-bottom: 2px solid var(--color-warm-accent);
+        }
+        
+        .chart-placeholder table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 0;
+            flex: 1;
+        }
+        
+        .chart-placeholder thead {
+            background-color: #f8f9fa;
+        }
+        
+        .chart-placeholder thead th {
+            padding: 12px 20px;
+            text-align: left;
+            font-weight: 600;
+            font-size: 0.9em;
+            color: var(--color-dark-primary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 2px solid #e9ecef;
+        }
+        
+        .chart-placeholder thead th:last-child {
+            text-align: right;
+        }
+        
+        .chart-placeholder tbody td {
+            padding: 12px 20px;
+            color: #2d3436;
+            font-size: 0.95em;
+            border-bottom: 1px solid #f1f3f5;
+        }
+        
+        .chart-placeholder tbody td:last-child {
+            text-align: right;
+            font-weight: 600;
+            color: var(--color-dark-primary);
+        }
+        
+        .chart-placeholder tbody tr:last-child td {
+            border-bottom: none;
+        }
+        
+        .chart-placeholder tbody tr:hover {
+            background-color: #fffbf0;
+        }
+        
+        .chart-placeholder tbody tr:nth-child(even) {
+            background-color: #fafafa;
+        }
+        
+        .chart-placeholder tbody tr:nth-child(even):hover {
+            background-color: #fffbf0;
+        }
+        
+        /* Responsive para Dashboard */
+        @media (max-width: 1200px) {
+            .charts-section {
+                grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+                gap: 20px;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .charts-section {
+                grid-template-columns: 1fr;
+                gap: 15px;
+            }
+            
+            .chart-placeholder {
+                min-height: 180px;
+            }
+            
+            .chart-placeholder h4 {
+                padding: 15px;
+                font-size: 1em;
+            }
+            
+            .chart-placeholder thead th,
+            .chart-placeholder tbody td {
+                padding: 10px 15px;
+                font-size: 0.9em;
+            }
         }
 
         /* ------------------------------------- */
@@ -359,9 +454,62 @@
                 <h2>📈 Dashboard de Indicadores</h2>
                 
                 <div class="charts-section">
-                    <div class="chart-placeholder">Gráfica 1: Tickets Pendientes vs. Finalizados</div>
-                    <div class="chart-placeholder">Gráfica 2: Tickets por Departamento</div>
-                    <div class="chart-placeholder">Gráfica 3: Productividad por Auxiliar</div>
+                    <div id="chart-pendientes-finalizados" class="chart-placeholder">
+                        <h4>Tickets Pendientes vs. Finalizados</h4>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Estado</th>
+                                    <th>Cantidad</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tabla-pendientes-finalizados">
+                                <tr>
+                                    <td colspan="2" style="text-align: center; padding: 20px; color: #7f8c8d;">
+                                        Cargando...
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <div id="chart-por-departamento" class="chart-placeholder">
+                        <h4>Tickets por Departamento</h4>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Departamento</th>
+                                    <th>Tickets</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tabla-por-departamento">
+                                <tr>
+                                    <td colspan="2" style="text-align: center; padding: 20px; color: #7f8c8d;">
+                                        Cargando...
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <div id="chart-productividad" class="chart-placeholder">
+                        <h4>Productividad por Auxiliar</h4>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Auxiliar</th>
+                                    <th>Finalizados</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tabla-productividad">
+                                <tr>
+                                    <td colspan="2" style="text-align: center; padding: 20px; color: #7f8c8d;">
+                                        Cargando...
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </section>
             
@@ -373,7 +521,6 @@
                     <select id="filtro-estatus" onchange="filtrarTickets()">
                         <option value="todos">Todos</option>
                         <option value="Pendiente">Pendientes</option>
-                        <option value="Asignado">Asignados</option>
                         <option value="En Proceso">En Proceso</option>
                         <option value="Finalizado">Finalizados</option>
                     </select>
@@ -419,6 +566,9 @@
             }
             cargarTickets();
             cargarAuxiliares();
+            cargarIndicadoresDashboard();
+            // Actualizar indicadores cada 30 segundos
+            setInterval(cargarIndicadoresDashboard, 30000);
         });
 
         // Cargar todos los tickets
@@ -574,12 +724,93 @@
                     cerrarModal();
                     // Recargar tickets para actualizar la tabla
                     cargarTickets();
+                    // Actualizar indicadores
+                    cargarIndicadoresDashboard();
                 } else {
                     alert('Error: ' + (data.message || 'Error desconocido al asignar.'));
                 }
             } catch (error) {
                 console.error('Error:', error);
                 alert('Error al asignar el ticket');
+            }
+        }
+
+        // Cargar indicadores del dashboard
+        async function cargarIndicadoresDashboard() {
+            try {
+                const response = await fetch('/api/dashboard/indicadores');
+                if (!response.ok) throw new Error('Error al cargar indicadores');
+                
+                const data = await response.json();
+                
+                // Actualizar tabla de Pendientes vs Finalizados
+                const tbodyPendientes = document.getElementById('tabla-pendientes-finalizados');
+                if (tbodyPendientes) {
+                    if (data.pendientes !== undefined && data.finalizados !== undefined) {
+                        tbodyPendientes.innerHTML = `
+                            <tr>
+                                <td>Pendientes</td>
+                                <td>${data.pendientes || 0}</td>
+                            </tr>
+                            <tr>
+                                <td>Finalizados</td>
+                                <td>${data.finalizados || 0}</td>
+                            </tr>
+                        `;
+                    } else {
+                        tbodyPendientes.innerHTML = `
+                            <tr>
+                                <td colspan="2" style="text-align: center; padding: 20px; color: #7f8c8d;">
+                                    No hay datos disponibles
+                                </td>
+                            </tr>
+                        `;
+                    }
+                }
+                
+                // Actualizar tabla por Departamento
+                const tbodyDepartamentos = document.getElementById('tabla-por-departamento');
+                if (tbodyDepartamentos) {
+                    if (data.por_departamento && data.por_departamento.length > 0) {
+                        tbodyDepartamentos.innerHTML = data.por_departamento.map((dept, index) => `
+                            <tr>
+                                <td>${dept.nombre || 'Sin departamento'}</td>
+                                <td>${dept.total || 0}</td>
+                            </tr>
+                        `).join('');
+                    } else {
+                        tbodyDepartamentos.innerHTML = `
+                            <tr>
+                                <td colspan="2" style="text-align: center; padding: 20px; color: #7f8c8d;">
+                                    No hay departamentos con tickets
+                                </td>
+                            </tr>
+                        `;
+                    }
+                }
+                
+                // Actualizar tabla de Productividad
+                const tbodyProductividad = document.getElementById('tabla-productividad');
+                if (tbodyProductividad) {
+                    if (data.productividad && data.productividad.length > 0) {
+                        tbodyProductividad.innerHTML = data.productividad.map((aux, index) => `
+                            <tr>
+                                <td>${aux.nombre || 'Sin nombre'}</td>
+                                <td>${aux.finalizados || 0}</td>
+                            </tr>
+                        `).join('');
+                    } else {
+                        tbodyProductividad.innerHTML = `
+                            <tr>
+                                <td colspan="2" style="text-align: center; padding: 20px; color: #7f8c8d;">
+                                    No hay auxiliares registrados
+                                </td>
+                            </tr>
+                        `;
+                    }
+                }
+            } catch (error) {
+                console.error('Error al cargar indicadores:', error);
             }
         }
 

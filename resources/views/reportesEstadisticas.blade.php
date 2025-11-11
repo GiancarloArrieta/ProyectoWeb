@@ -3,7 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>Reportes y Estadísticas - Admin</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         /* ------------------------------------- */
         /* Variables de Color (Esquema del Usuario: Cálido/Oscuro) */
@@ -155,17 +157,16 @@
         }
 
         #contenedor-grafica {
-            min-height: 300px;
+            min-height: 400px;
             background-color: white;
-            border: 1px dashed #ccc;
+            border: 1px solid #ddd;
             border-radius: 10px;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            color: #7f8c8d;
-            font-size: 1.2em;
             padding: 20px;
+            position: relative;
+        }
+        
+        #contenedor-grafica canvas {
+            max-height: 350px;
         }
 
         /* ------------------------------------- */
@@ -273,15 +274,15 @@
             </div>
 
             <div id="contenedor-grafica">
-                <p>Aquí se visualizaría la gráfica seleccionada.</p>
-                <p style="font-size: 0.9em; margin-top: 5px;">(Simulación de gráfico de barras/pastel)</p>
+                <canvas id="grafica-chart"></canvas>
             </div>
         </section>
 
         <section id="seccion-reportes">
             <h3>Generación de Reportes PDF</h3>
 
-            <form method="GET" action="/admin/reportes/generar">
+            <form id="form-generar-reporte" method="POST" action="/admin/reportes/generar-pdf">
+                @csrf
 
                 <div>
                     <label for="reporte_fecha_inicio">Fecha de Inicio:</label>
@@ -308,43 +309,256 @@
                     <label for="reporte_departamento">Filtrar por Departamento:</label>
                     <select id="reporte_departamento" name="department">
                         <option value="todos">Todos los Departamentos</option>
-                        <option value="ventas">Ventas</option>
-                        <option value="produccion">Producción</option>
-                        <option value="rh">Recursos Humanos</option>
                     </select>
                 </div>
 
                 <button type="submit">Generar y Descargar Reporte PDF 📄</button>
             </form>
+            
+            <div id="mensaje-reporte" style="margin-top: 15px; display: none;"></div>
         </section>
 
     </main>
     
     <script>
-        function cargarGrafica() {
-            const tipo = document.getElementById('tipo_grafica').value;
-            const contenedor = document.getElementById('contenedor-grafica');
-            
-            let descripcion = '';
-            switch (tipo) {
-                case 'estatus':
-                    descripcion = 'Gráfico de pastel mostrando tickets por estado (Finalizado, Pendiente, Proceso).';
-                    break;
-                case 'departamento':
-                    descripcion = 'Gráfico de barras mostrando el volumen de tickets por departamento.';
-                    break;
-                case 'auxiliar':
-                    descripcion = 'Gráfico de barras de la productividad (tickets cerrados) por auxiliar.';
-                    break;
-                case 'tiempo':
-                    descripcion = 'Gráfico de línea del tiempo promedio de respuesta a lo largo del periodo.';
-                    break;
-                default:
-                    descripcion = 'Aquí se visualizaría la gráfica seleccionada.';
-            }
+        let chartInstance = null;
 
-            contenedor.innerHTML = `<p style="font-weight: 600; color: var(--color-dark-primary);">Gráfica: ${tipo.charAt(0).toUpperCase() + tipo.slice(1)}</p><p style="font-size: 0.9em; margin-top: 5px;">${descripcion}</p>`;
+        // Cargar gráfica al cambiar el tipo
+        async function cargarGrafica() {
+            const tipo = document.getElementById('tipo_grafica').value;
+            
+            try {
+                const response = await fetch(`/api/reportes/grafica?tipo=${tipo}`);
+                if (!response.ok) throw new Error('Error al cargar datos de la gráfica');
+                
+                const data = await response.json();
+                const ctx = document.getElementById('grafica-chart').getContext('2d');
+                
+                // Destruir gráfica anterior si existe
+                if (chartInstance) {
+                    chartInstance.destroy();
+                }
+                
+                // Crear nueva gráfica según el tipo
+                switch (tipo) {
+                    case 'estatus':
+                        chartInstance = new Chart(ctx, {
+                            type: 'pie',
+                            data: {
+                                labels: data.labels || [],
+                                datasets: [{
+                                    data: data.values || [],
+                                    backgroundColor: ['#e67e22', '#0984e3', '#f39c12', '#00b894'],
+                                }]
+                            },
+                            options: {
+                                responsive: true,
+                                maintainAspectRatio: true,
+                                plugins: {
+                                    title: {
+                                        display: true,
+                                        text: 'Tickets por Estatus'
+                                    }
+                                }
+                            }
+                        });
+                        break;
+                    case 'departamento':
+                        chartInstance = new Chart(ctx, {
+                            type: 'bar',
+                            data: {
+                                labels: data.labels || [],
+                                datasets: [{
+                                    label: 'Tickets',
+                                    data: data.values || [],
+                                    backgroundColor: '#0984e3',
+                                }]
+                            },
+                            options: {
+                                responsive: true,
+                                maintainAspectRatio: true,
+                                plugins: {
+                                    title: {
+                                        display: true,
+                                        text: 'Tickets por Departamento'
+                                    }
+                                },
+                                scales: {
+                                    y: {
+                                        beginAtZero: true
+                                    }
+                                }
+                            }
+                        });
+                        break;
+                    case 'auxiliar':
+                        chartInstance = new Chart(ctx, {
+                            type: 'bar',
+                            data: {
+                                labels: data.labels || [],
+                                datasets: [{
+                                    label: 'Tickets Finalizados',
+                                    data: data.values || [],
+                                    backgroundColor: '#00b894',
+                                }]
+                            },
+                            options: {
+                                responsive: true,
+                                maintainAspectRatio: true,
+                                plugins: {
+                                    title: {
+                                        display: true,
+                                        text: 'Productividad por Auxiliar'
+                                    }
+                                },
+                                scales: {
+                                    y: {
+                                        beginAtZero: true
+                                    }
+                                }
+                            }
+                        });
+                        break;
+                    case 'tiempo':
+                        chartInstance = new Chart(ctx, {
+                            type: 'line',
+                            data: {
+                                labels: data.labels || [],
+                                datasets: [{
+                                    label: 'Tiempo Promedio (horas)',
+                                    data: data.values || [],
+                                    borderColor: '#0984e3',
+                                    backgroundColor: 'rgba(9, 132, 227, 0.1)',
+                                    fill: true,
+                                }]
+                            },
+                            options: {
+                                responsive: true,
+                                maintainAspectRatio: true,
+                                plugins: {
+                                    title: {
+                                        display: true,
+                                        text: 'Tiempo Promedio de Respuesta'
+                                    }
+                                },
+                                scales: {
+                                    y: {
+                                        beginAtZero: true
+                                    }
+                                }
+                            }
+                        });
+                        break;
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                const contenedor = document.getElementById('contenedor-grafica');
+                contenedor.innerHTML = '<p style="color: var(--color-danger-red);">Error al cargar la gráfica</p>';
+            }
         }
+
+        // Cargar departamentos en el select
+        async function cargarDepartamentos() {
+            try {
+                const response = await fetch('/api/departamentos');
+                if (!response.ok) throw new Error('Error al cargar departamentos');
+                
+                const departamentos = await response.json();
+                const select = document.getElementById('reporte_departamento');
+                
+                departamentos.forEach(dept => {
+                    const option = document.createElement('option');
+                    option.value = dept.id;
+                    option.textContent = dept.nombre;
+                    select.appendChild(option);
+                });
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        }
+
+        // Cargar gráfica al iniciar
+        document.addEventListener('DOMContentLoaded', function() {
+            cargarGrafica();
+            cargarDepartamentos();
+        });
+
+        // Manejar envío del formulario de reporte PDF
+        document.getElementById('form-generar-reporte').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(this);
+            const mensajeDiv = document.getElementById('mensaje-reporte');
+            
+            try {
+                mensajeDiv.style.display = 'block';
+                mensajeDiv.style.backgroundColor = '#d1ecf1';
+                mensajeDiv.style.color = '#0c5460';
+                mensajeDiv.style.padding = '15px';
+                mensajeDiv.style.borderRadius = '8px';
+                mensajeDiv.textContent = 'Generando reporte PDF...';
+                
+                const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+                
+                const response = await fetch('/admin/reportes/generar-pdf', {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': csrfToken,
+                    },
+                    body: formData,
+                });
+
+                if (response.ok) {
+                    const contentType = response.headers.get('content-type');
+                    
+                    if (contentType && contentType.includes('application/pdf')) {
+                        // Es un PDF
+                        const blob = await response.blob();
+                        const url = window.URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.download = `reporte-tickets-${new Date().toISOString().split('T')[0]}.pdf`;
+                        document.body.appendChild(a);
+                        a.click();
+                        window.URL.revokeObjectURL(url);
+                        document.body.removeChild(a);
+                    } else if (contentType && contentType.includes('text/html')) {
+                        // Es HTML (para imprimir como PDF)
+                        const blob = await response.blob();
+                        const url = window.URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.download = `reporte-tickets-${new Date().toISOString().split('T')[0]}.html`;
+                        document.body.appendChild(a);
+                        a.click();
+                        window.URL.revokeObjectURL(url);
+                        document.body.removeChild(a);
+                        
+                        mensajeDiv.innerHTML = 'Reporte HTML generado. Puede abrirlo e imprimirlo como PDF desde su navegador (Ctrl+P → Guardar como PDF).';
+                    } else {
+                        // JSON response (fallback)
+                        const data = await response.json();
+                        if (data.success) {
+                            mensajeDiv.innerHTML = `Reporte generado con ${data.total} tickets. Los datos están disponibles en la consola.`;
+                            console.log('Datos del reporte:', data);
+                        }
+                    }
+                    
+                    mensajeDiv.style.backgroundColor = '#d4edda';
+                    mensajeDiv.style.color = '#155724';
+                    if (!mensajeDiv.innerHTML.includes('Reporte')) {
+                        mensajeDiv.textContent = 'Reporte generado y descargado exitosamente';
+                    }
+                } else {
+                    throw new Error('Error al generar el reporte');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                mensajeDiv.style.backgroundColor = '#f8d7da';
+                mensajeDiv.style.color = '#721c24';
+                mensajeDiv.textContent = 'Error al generar el reporte PDF';
+            }
+        });
     </script>
 
 </body>

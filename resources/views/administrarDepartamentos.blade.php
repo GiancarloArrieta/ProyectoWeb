@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>Administrar Departamentos - Admin</title>
     <style>
         /* ------------------------------------- */
@@ -280,18 +281,39 @@
         <section id="crear-departamento">
             <h3>➕ Crear Nuevo Departamento</h3>
 
-            <form method="POST" action="/admin/departamentos/store">
+            @if ($errors->any())
+                <div style="background-color: #f8d7da; color: #721c24; padding: 15px; margin-bottom: 20px; border-radius: 8px; border: 1px solid #f5c6cb;">
+                    <ul style="margin: 0; padding-left: 20px;">
+                        @foreach ($errors->all() as $error)
+                            <li>{{ $error }}</li>
+                        @endforeach
+                    </ul>
+                </div>
+            @endif
+
+            @if (session('success'))
+                <div style="background-color: #d4edda; color: #155724; padding: 15px; margin-bottom: 20px; border-radius: 8px; border: 1px solid #c3e6cb;">
+                    {{ session('success') }}
+                </div>
+            @endif
+
+            <form method="POST" action="{{ route('departamentos.store') }}" id="form-departamento">
+                @csrf
+                <input type="hidden" id="departamento-id" name="departamento_id" value="">
+                <input type="hidden" id="form-method" name="_method" value="POST">
+
                 <div>
                     <label for="nombre_departamento">Nombre del Departamento:</label>
-                    <input type="text" id="nombre_departamento" name="name" required placeholder="Ej: Logística y Distribución">
+                    <input type="text" id="nombre_departamento" name="name" required placeholder="Ej: Logística y Distribución" value="{{ old('name') }}">
                 </div>
 
                 <div>
                     <label for="descripcion_departamento">Descripción Breve:</label>
-                    <textarea id="descripcion_departamento" name="description" rows="3" placeholder="Función principal del departamento..."></textarea>
+                    <textarea id="descripcion_departamento" name="description" rows="3" placeholder="Función principal del departamento...">{{ old('description') }}</textarea>
                 </div>
 
-                <button type="submit">Guardar Departamento</button>
+                <button type="submit" id="submit-button">Guardar Departamento</button>
+                <button type="button" id="cancel-button" onclick="cancelarEdicion()" style="display: none; background-color: var(--color-cancel-gray); color: white; padding: 12px 25px; border: none; border-radius: 8px; cursor: pointer; font-size: 1em; font-weight: 700; margin-left: 10px;">Cancelar</button>
             </form>
         </section>
 
@@ -307,58 +329,32 @@
                         <th>Acciones</th>
                     </tr>
                 </thead>
-                <tbody>
+                <tbody id="departamentos-tbody">
                     <tr>
-                        <td>1</td>
-                        <td>Ventas</td>
-                        <td>15</td>
-                        <td>
-                            <button type="button" onclick="editarDepartamento(1)">Editar Nombre</button>
-                            <button type="button" onclick="eliminarDepartamento(1)">Eliminar</button>
+                        <td colspan="4" style="text-align: center; padding: 20px; color: #7f8c8d;">
+                            Cargando departamentos...
                         </td>
                     </tr>
-                    <tr>
-                        <td>2</td>
-                        <td>Producción</td>
-                        <td>32</td>
-                        <td>
-                            <button type="button" onclick="editarDepartamento(2)">Editar Nombre</button>
-                            <button type="button" onclick="eliminarDepartamento(2)">Eliminar</button>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>3</td>
-                        <td>Recursos Humanos</td>
-                        <td>8</td>
-                        <td>
-                            <button type="button" onclick="editarDepartamento(3)">Editar Nombre</button>
-                            <button type="button" onclick="eliminarDepartamento(3)">Eliminar</button>
-                        </td>
-                    </tr>
-                    </tbody>
+                </tbody>
             </table>
         </section>
 
         <section id="asignar-usuarios-a-departamentos">
             <h3>🔗 Reasignar Empleado a Departamento</h3>
 
-            <form method="POST" action="/admin/departamentos/reasignar">
+            <form method="POST" action="{{ route('departamentos.reasignar') }}" id="form-reasignar">
+                @csrf
                 <div>
                     <label for="usuario_a_reasignar">Seleccionar Empleado:</label>
                     <select id="usuario_a_reasignar" name="user_id" required>
-                        <option value="">Buscar y Seleccionar Usuario</option>
-                        <option value="101">Juan Pérez (Ventas)</option>
-                        <option value="102">María García (Producción)</option>
-                        </select>
+                        <option value="">Cargando usuarios...</option>
+                    </select>
                 </div>
 
                 <div>
                     <label for="nuevo_departamento">Nuevo Departamento:</label>
                     <select id="nuevo_departamento" name="department_id" required>
-                        <option value="">Seleccione Departamento</option>
-                        <option value="1">Ventas</option>
-                        <option value="2">Producción</option>
-                        <option value="3">Recursos Humanos</option>
+                        <option value="">Cargando departamentos...</option>
                     </select>
                 </div>
 
@@ -369,19 +365,189 @@
     </main>
 
     <script>
-        // Funciones Placeholder (deben ser implementadas con la lógica de backend)
+        // Cargar datos al iniciar
+        document.addEventListener('DOMContentLoaded', function() {
+            cargarDepartamentos();
+            cargarUsuarios();
+            cargarDepartamentosSelect();
+            // Actualizar cada 10 segundos
+            setInterval(cargarDepartamentos, 10000);
+            setInterval(cargarUsuarios, 10000);
+            setInterval(cargarDepartamentosSelect, 10000);
+        });
 
-        function editarDepartamento(id) {
-            alert('Funcionalidad de Edición para el Departamento ID: ' + id + ' pendiente de implementar.');
-            // Aquí iría la lógica para cargar el formulario de "Crear Nuevo Departamento" con los datos del departamento seleccionado para edición.
-        }
+        // Cargar departamentos en la tabla
+        async function cargarDepartamentos() {
+            try {
+                const response = await fetch('/api/departamentos');
+                if (!response.ok) throw new Error('Error al cargar departamentos');
+                
+                const departamentos = await response.json();
+                const tbody = document.getElementById('departamentos-tbody');
+                
+                if (departamentos.length === 0) {
+                    tbody.innerHTML = `
+                        <tr>
+                            <td colspan="4" style="text-align: center; padding: 20px; color: #7f8c8d;">
+                                No hay departamentos registrados
+                            </td>
+                        </tr>
+                    `;
+                    return;
+                }
 
-        function eliminarDepartamento(id) {
-            if (confirm('¿Está seguro de que desea eliminar el Departamento ID: ' + id + '? Todos los empleados deberán ser reasignados.')) {
-                alert('Solicitud de eliminación para Departamento ID: ' + id + ' enviada.');
-                // Aquí iría la lógica para enviar la solicitud DELETE al servidor.
+                tbody.innerHTML = departamentos.map(dept => `
+                    <tr>
+                        <td>${dept.id}</td>
+                        <td>${dept.nombre}</td>
+                        <td>${dept.usuarios_count || 0}</td>
+                        <td>
+                            <button type="button" onclick="editarDepartamento(${dept.id}, '${dept.nombre.replace(/'/g, "\\'")}')">Editar Nombre</button>
+                            <button type="button" onclick="eliminarDepartamento(${dept.id})">Eliminar</button>
+                        </td>
+                    </tr>
+                `).join('');
+            } catch (error) {
+                console.error('Error:', error);
+                document.getElementById('departamentos-tbody').innerHTML = `
+                    <tr>
+                        <td colspan="4" style="text-align: center; padding: 20px; color: var(--color-danger-red);">
+                            Error al cargar los departamentos
+                        </td>
+                    </tr>
+                `;
             }
         }
+
+        // Cargar usuarios en el select
+        async function cargarUsuarios() {
+            try {
+                const response = await fetch('/api/usuarios/todos');
+                if (!response.ok) throw new Error('Error al cargar usuarios');
+                
+                const usuarios = await response.json();
+                const select = document.getElementById('usuario_a_reasignar');
+                
+                select.innerHTML = '<option value="">Seleccionar Usuario</option>' + 
+                    usuarios.map(usuario => {
+                        const departamento = usuario.departamento ? usuario.departamento.nombre : 'Sin departamento';
+                        return `<option value="${usuario.id}">${usuario.nombre} (${departamento})</option>`;
+                    }).join('');
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        }
+
+        // Cargar departamentos en el select
+        async function cargarDepartamentosSelect() {
+            try {
+                const response = await fetch('/api/departamentos');
+                if (!response.ok) throw new Error('Error al cargar departamentos');
+                
+                const departamentos = await response.json();
+                const select = document.getElementById('nuevo_departamento');
+                
+                select.innerHTML = '<option value="">Seleccione Departamento</option>' + 
+                    departamentos.map(dept => `<option value="${dept.id}">${dept.nombre}</option>`).join('');
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        }
+
+        // Editar departamento
+        function editarDepartamento(id, nombre) {
+            document.getElementById('departamento-id').value = id;
+            document.getElementById('nombre_departamento').value = nombre;
+            document.getElementById('form-method').value = 'PUT';
+            document.getElementById('form-departamento').action = `/api/departamentos/${id}`;
+            document.getElementById('submit-button').textContent = 'Actualizar Departamento';
+            document.getElementById('cancel-button').style.display = 'inline-block';
+            
+            // Scroll al formulario
+            document.getElementById('crear-departamento').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // Cancelar edición
+        function cancelarEdicion() {
+            document.getElementById('form-departamento').reset();
+            document.getElementById('departamento-id').value = '';
+            document.getElementById('form-method').value = 'POST';
+            document.getElementById('form-departamento').action = '{{ route("departamentos.store") }}';
+            document.getElementById('submit-button').textContent = 'Guardar Departamento';
+            document.getElementById('cancel-button').style.display = 'none';
+        }
+
+        // Eliminar departamento
+        async function eliminarDepartamento(id) {
+            if (!confirm('¿Está seguro de que desea eliminar este departamento? Todos los empleados deberán ser reasignados.')) {
+                return;
+            }
+
+            try {
+                const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+                const response = await fetch(`/api/departamentos/${id}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'X-CSRF-TOKEN': csrfToken,
+                        'Content-Type': 'application/json',
+                    },
+                });
+
+                const data = await response.json();
+
+                if (response.ok && data.success) {
+                    alert('Departamento eliminado exitosamente');
+                    cargarDepartamentos();
+                    cargarDepartamentosSelect();
+                } else {
+                    alert('Error: ' + (data.message || 'Error desconocido al eliminar'));
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error al eliminar el departamento');
+            }
+        }
+
+        // Manejar envío del formulario de departamento
+        document.getElementById('form-departamento').addEventListener('submit', async function(e) {
+            const method = document.getElementById('form-method').value;
+            const id = document.getElementById('departamento-id').value;
+            
+            if (method === 'PUT') {
+                e.preventDefault();
+                
+                try {
+                    const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+                    const nombre = document.getElementById('nombre_departamento').value;
+                    
+                    const response = await fetch(`/api/departamentos/${id}`, {
+                        method: 'PUT',
+                        headers: {
+                            'X-CSRF-TOKEN': csrfToken,
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ nombre: nombre }),
+                    });
+
+                    const data = await response.json();
+
+                    if (response.ok && data.success) {
+                        alert('Departamento actualizado exitosamente');
+                        cancelarEdicion();
+                        cargarDepartamentos();
+                        cargarDepartamentosSelect();
+                    } else {
+                        alert('Error: ' + (data.message || 'Error desconocido al actualizar'));
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    alert('Error al actualizar el departamento');
+                }
+            } else {
+                // POST - dejar que el formulario se envíe normalmente y la página se recargue
+                // La página se recargará con el mensaje de éxito
+            }
+        });
     </script>
 
 </body>
