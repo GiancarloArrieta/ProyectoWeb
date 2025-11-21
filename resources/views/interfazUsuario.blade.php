@@ -353,8 +353,8 @@
             if (status === 'Pendiente') {
                 return `<button onclick="showCustomConfirm(${ticketId})" class="btn btn-danger" style="box-shadow: none;">Cancelar Ticket</button>`;
             }
-            // Botón de ver ticket
-            return `<a href="/tickets/${ticketId}" style="text-decoration: none;"><button class="btn btn-primary" style="box-shadow: none; padding: 8px 12px;">NO DISPONIBLE</button></a>`;
+            // Texto fijo sin acción cuando no está disponible
+            return `<span style="display: inline-block; padding: 8px 12px; border-radius: 8px; background-color: var(--color-primary-blue); color: white; font-weight: 600; font-size: 0.85em; cursor: default; opacity: 0.7;">NO DISPONIBLE</span>`;
         }
         
         // Función para mostrar confirmación personalizada (con estilos limpios)

@@ -115,6 +115,10 @@ class DepartamentoController extends Controller
         ]);
 
         if ($validator->fails()) {
+            // Si es una petición AJAX, devolver JSON
+            if ($request->expectsJson() || $request->ajax()) {
+                return response()->json(['success' => false, 'message' => $validator->errors()->first()], 400);
+            }
             return back()->withErrors($validator)->withInput();
         }
 
@@ -122,6 +126,18 @@ class DepartamentoController extends Controller
         $usuario->update([
             'id_departamento' => $request->department_id,
         ]);
+
+        // Recargar relaciones
+        $usuario->load(['rol', 'departamento']);
+
+        // Si es una petición AJAX, devolver JSON
+        if ($request->expectsJson() || $request->ajax()) {
+            return response()->json([
+                'success' => true, 
+                'message' => 'Usuario reasignado exitosamente.',
+                'usuario' => $usuario
+            ]);
+        }
 
         return redirect()->route('departamentos.index')->with('success', 'Usuario reasignado exitosamente.');
     }

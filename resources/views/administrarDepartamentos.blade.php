@@ -244,21 +244,35 @@
             background-color: #c0392b;
         }
 
-        /* Estilos específicos del formulario de reasignación */
-        #asignar-usuarios-a-departamentos form {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
+        /* Estilos específicos de la tabla de reasignación */
+        #usuarios-reasignar-table {
+            margin-top: 20px;
         }
-        #asignar-usuarios-a-departamentos form button {
-            grid-column: span 2;
-            align-self: center;
+        
+        #usuarios-reasignar-table td select {
+            width: 100%;
+            padding: 8px 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 0.9em;
+            background-color: white;
+            cursor: pointer;
+            transition: border-color 0.3s, box-shadow 0.3s;
         }
-        /* Ajuste para el estilo del botón cuando está solo en el grid */
-        #asignar-usuarios-a-departamentos form > button {
-             grid-column: span 2; 
-             margin-top: 0;
-             justify-self: start;
+        
+        #usuarios-reasignar-table td select:focus {
+            border-color: var(--color-warm-accent);
+            box-shadow: 0 0 5px rgba(253, 203, 110, 0.5);
+            outline: none;
+        }
+        
+        .btn-reasignar:hover {
+            background-color: #0c6ccf !important;
+        }
+        
+        #asignar-usuarios-a-departamentos p {
+            font-size: 0.95em;
+            margin-bottom: 15px;
         }
     </style>
 </head>
@@ -341,39 +355,46 @@
 
         <section id="asignar-usuarios-a-departamentos">
             <h3>🔗 Reasignar Empleado a Departamento</h3>
+            <p style="color: #555; margin-bottom: 20px;">Seleccione un nuevo departamento para cada empleado y haga clic en "Cambiar" para aplicar la reasignación.</p>
 
-            <form method="POST" action="{{ route('departamentos.reasignar') }}" id="form-reasignar">
-                @csrf
-                <div>
-                    <label for="usuario_a_reasignar">Seleccionar Empleado:</label>
-                    <select id="usuario_a_reasignar" name="user_id" required>
-                        <option value="">Cargando usuarios...</option>
-                    </select>
-                </div>
-
-                <div>
-                    <label for="nuevo_departamento">Nuevo Departamento:</label>
-                    <select id="nuevo_departamento" name="department_id" required>
-                        <option value="">Cargando departamentos...</option>
-                    </select>
-                </div>
-
-                <button type="submit">Reasignar Empleado</button>
-            </form>
+            <table id="usuarios-reasignar-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Nombre</th>
+                        <th>Email</th>
+                        <th>Rol</th>
+                        <th>Departamento Actual</th>
+                        <th>Nuevo Departamento</th>
+                        <th>Acción</th>
+                    </tr>
+                </thead>
+                <tbody id="usuarios-reasignar-tbody">
+                    <tr>
+                        <td colspan="7" style="text-align: center; padding: 20px; color: #7f8c8d;">
+                            Cargando usuarios...
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
         </section>
 
     </main>
 
     <script>
+        // Variables globales para almacenar datos
+        let todosLosDepartamentos = [];
+        let todosLosUsuarios = [];
+
         // Cargar datos al iniciar
         document.addEventListener('DOMContentLoaded', function() {
             cargarDepartamentos();
-            cargarUsuarios();
-            cargarDepartamentosSelect();
+            cargarUsuariosParaReasignar();
+            cargarDepartamentosParaSelect();
             // Actualizar cada 10 segundos
             setInterval(cargarDepartamentos, 10000);
-            setInterval(cargarUsuarios, 10000);
-            setInterval(cargarDepartamentosSelect, 10000);
+            setInterval(cargarUsuariosParaReasignar, 10000);
+            setInterval(cargarDepartamentosParaSelect, 10000);
         });
 
         // Cargar departamentos en la tabla
@@ -419,38 +440,151 @@
             }
         }
 
-        // Cargar usuarios en el select
-        async function cargarUsuarios() {
+        // Cargar usuarios para la tabla de reasignación
+        async function cargarUsuariosParaReasignar() {
             try {
                 const response = await fetch('/api/usuarios/todos');
                 if (!response.ok) throw new Error('Error al cargar usuarios');
                 
-                const usuarios = await response.json();
-                const select = document.getElementById('usuario_a_reasignar');
+                todosLosUsuarios = await response.json();
+                renderUsuariosParaReasignar();
+            } catch (error) {
+                console.error('Error:', error);
+                document.getElementById('usuarios-reasignar-tbody').innerHTML = `
+                    <tr>
+                        <td colspan="7" style="text-align: center; padding: 20px; color: var(--color-danger-red);">
+                            Error al cargar los usuarios
+                        </td>
+                    </tr>
+                `;
+            }
+        }
+
+        // Cargar departamentos para los selects de reasignación
+        async function cargarDepartamentosParaSelect() {
+            try {
+                const response = await fetch('/api/departamentos');
+                if (!response.ok) throw new Error('Error al cargar departamentos');
                 
-                select.innerHTML = '<option value="">Seleccionar Usuario</option>' + 
-                    usuarios.map(usuario => {
-                        const departamento = usuario.departamento ? usuario.departamento.nombre : 'Sin departamento';
-                        return `<option value="${usuario.id}">${usuario.nombre} (${departamento})</option>`;
-                    }).join('');
+                todosLosDepartamentos = await response.json();
+                renderUsuariosParaReasignar(); // Volver a renderizar para actualizar los selects
             } catch (error) {
                 console.error('Error:', error);
             }
         }
 
-        // Cargar departamentos en el select
-        async function cargarDepartamentosSelect() {
+        // Renderizar usuarios en la tabla de reasignación
+        function renderUsuariosParaReasignar() {
+            const tbody = document.getElementById('usuarios-reasignar-tbody');
+            
+            if (todosLosUsuarios.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="7" style="text-align: center; padding: 20px; color: #7f8c8d;">
+                            No hay usuarios registrados
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            if (todosLosDepartamentos.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="7" style="text-align: center; padding: 20px; color: #7f8c8d;">
+                            Cargando departamentos...
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            tbody.innerHTML = todosLosUsuarios.map(usuario => {
+                const departamentoActual = usuario.departamento ? usuario.departamento.nombre : 'Sin departamento';
+                const rolNombre = usuario.rol ? usuario.rol.nombre : 'Sin rol';
+                const departamentoActualId = usuario.departamento ? usuario.departamento.id : null;
+                
+                // Crear opciones de departamentos
+                const opcionesDepartamentos = todosLosDepartamentos.map(dept => {
+                    const selected = departamentoActualId != null && departamentoActualId == dept.id ? 'selected' : '';
+                    return `<option value="${dept.id}" ${selected}>${dept.nombre}</option>`;
+                }).join('');
+
+                return `
+                    <tr id="usuario-row-${usuario.id}">
+                        <td>${usuario.id}</td>
+                        <td>${usuario.nombre}</td>
+                        <td>${usuario.correo || 'N/A'}</td>
+                        <td>${rolNombre}</td>
+                        <td><strong>${departamentoActual}</strong></td>
+                        <td>
+                            <select id="select-departamento-${usuario.id}" class="select-departamento" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 5px;">
+                                <option value="">Sin departamento</option>
+                                ${opcionesDepartamentos}
+                            </select>
+                        </td>
+                        <td>
+                            <button type="button" onclick="reasignarUsuario(${usuario.id})" class="btn-reasignar" style="padding: 8px 15px; border: none; border-radius: 5px; cursor: pointer; font-weight: 600; font-size: 0.9em; background-color: var(--color-info-blue); color: white; transition: background-color 0.3s;">
+                                Cambiar
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        // Función para reasignar un usuario a un departamento
+        async function reasignarUsuario(userId) {
+            const select = document.getElementById(`select-departamento-${userId}`);
+            const departmentId = select.value;
+
+            if (!departmentId) {
+                alert('Por favor, seleccione un departamento');
+                return;
+            }
+
+            const usuario = todosLosUsuarios.find(u => u.id === userId);
+            const departamentoSeleccionado = todosLosDepartamentos.find(d => d.id == departmentId);
+            
+            if (!departamentoSeleccionado) {
+                alert('Departamento no válido');
+                return;
+            }
+
+            const departamentoActual = usuario.departamento ? usuario.departamento.nombre : 'Sin departamento';
+            
+            if (!confirm(`¿Desea reasignar a ${usuario.nombre} del departamento "${departamentoActual}" al departamento "${departamentoSeleccionado.nombre}"?`)) {
+                return;
+            }
+
             try {
-                const response = await fetch('/api/departamentos');
-                if (!response.ok) throw new Error('Error al cargar departamentos');
-                
-                const departamentos = await response.json();
-                const select = document.getElementById('nuevo_departamento');
-                
-                select.innerHTML = '<option value="">Seleccione Departamento</option>' + 
-                    departamentos.map(dept => `<option value="${dept.id}">${dept.nombre}</option>`).join('');
+                const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+                const response = await fetch('{{ route("departamentos.reasignar") }}', {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': csrfToken,
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    body: JSON.stringify({
+                        user_id: userId,
+                        department_id: departmentId
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok && data.success) {
+                    alert(`Usuario ${usuario.nombre} reasignado exitosamente al departamento ${departamentoSeleccionado.nombre}`);
+                    // Recargar usuarios para actualizar la tabla
+                    cargarUsuariosParaReasignar();
+                } else {
+                    alert('Error: ' + (data.message || 'Error desconocido al reasignar'));
+                }
             } catch (error) {
                 console.error('Error:', error);
+                alert('Error al reasignar el usuario');
             }
         }
 
