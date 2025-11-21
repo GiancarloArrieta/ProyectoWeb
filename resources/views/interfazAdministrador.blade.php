@@ -91,6 +91,11 @@
             background-color: #e74c3c;
         }
 
+        /* Botón de Editar Datos */
+        header a button:hover {
+            background-color: #0c6ccf !important;
+        }
+
 
         /* ------------------------------------- */
         /* LAYOUT PRINCIPAL (Contenedor de Sidebar y Main) */
@@ -435,17 +440,46 @@
     
     <header>
         <h1><span style="color: var(--color-warm-accent); font-size: 1.2em;">👑</span> Panel de Jefe de Soporte</h1>
-        <form method="POST" action="{{ route('logout') }}" style="display: inline;">
-            @csrf
-            <button type="submit" class="btn-close">
-                Cerrar Sesión
-            </button>
-        </form>
+        <div style="display: flex; gap: 10px; align-items: center;">
+            <a href="{{ route('usuario.edit.adminaux', ['origen' => 'administrador']) }}" style="text-decoration: none;">
+                <button type="button" style="background-color: var(--color-info-blue); color: white; border: none; padding: 12px 30px; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; transition: background-color 0.3s;">
+                    ✏️ Editar Datos
+                </button>
+            </a>
+            <form method="POST" action="{{ route('logout') }}" style="display: inline;">
+                @csrf
+                <button type="submit" class="btn-close">
+                    Cerrar Sesión
+                </button>
+            </form>
+        </div>
     </header>
 
     <div class="admin-layout">
         
         <aside>
+            <!-- Sección de Perfil del Usuario -->
+            <div style="background-color: var(--color-soft-bg); padding: 20px; border-radius: 10px; margin-bottom: 25px; border: 2px solid var(--color-warm-accent);">
+                <h3 style="margin-top: 0; margin-bottom: 15px; font-size: 1.1em; color: var(--color-dark-primary); border-bottom: 2px solid var(--color-warm-accent); padding-bottom: 10px;">👤 Mi Perfil</h3>
+                <div style="text-align: center; margin-bottom: 15px;">
+                    @php
+                        $profilePhotoPath = $usuario->profile_photo ?? null;
+                        $profilePhotoPath = $profilePhotoPath ? asset('storage/' . $profilePhotoPath) : asset('images/default-avatar.png');
+                    @endphp
+                    <img 
+                        src="{{ $profilePhotoPath }}" 
+                        alt="Foto de perfil" 
+                        style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover; border: 3px solid var(--color-warm-accent); box-shadow: 0 2px 8px rgba(0,0,0,0.1);"
+                    >
+                </div>
+                <div style="font-size: 0.9em; color: var(--color-dark-primary);">
+                    <p style="margin: 8px 0; word-wrap: break-word;"><strong>Nombre:</strong> {{ $usuario->nombre ?? 'N/A' }}</p>
+                    <p style="margin: 8px 0; word-wrap: break-word;"><strong>Email:</strong> {{ $usuario->correo ?? 'N/A' }}</p>
+                    <p style="margin: 8px 0; border-top: 1px solid #ddd; padding-top: 8px;"><strong>Puesto:</strong> {{ $usuario->rol_nombre ?? 'N/A' }}</p>
+                    <p style="margin: 8px 0;"><strong>Depto:</strong> {{ $usuario->departamento_nombre ?? 'N/A' }}</p>
+                </div>
+            </div>
+            
             <h3>Gestión del Sistema</h3>
             <nav>
                 <a href="/gestionarusuarios">👥 Crear Usuarios y Roles</a>
@@ -456,6 +490,12 @@
         </aside>
 
         <main>
+            
+            @if (session('success'))
+                <div style="background-color: #d4edda; color: #155724; padding: 15px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #c3e6cb; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
+                    ✅ {{ session('success') }}
+                </div>
+            @endif
             
             <section id="reportes-graficas" class="card-panel">
                 <h2>📈 Dashboard de Indicadores</h2>

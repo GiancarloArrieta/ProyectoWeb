@@ -23,8 +23,14 @@ Route::middleware('auth')->group(function () {
     // RUTA DE EDICIÓN: Ahora apunta al método 'edit' en UsuarioController
     Route::get('/editarinformacionusuario', [UsuarioController::class, 'edit'])->name('usuario.edit'); 
     
+    // RUTA DE EDICIÓN PARA ADMIN/AUXILIAR: Nueva ruta para editar perfil desde interfaces de admin/auxiliar
+    Route::get('/editarinformacionadminaux', [UsuarioController::class, 'editAdminAuxiliar'])->name('usuario.edit.adminaux');
+    
     // RUTA DE ACTUALIZACIÓN: Ya existía y apunta al método 'updateProfile' (lo usaremos para guardar la imagen)
     Route::post('/profile/update', [UsuarioController::class, 'updateProfile'])->name('usuario.update');
+    
+    // RUTA DE ACTUALIZACIÓN PARA ADMIN/AUXILIAR: Nueva ruta para actualizar perfil y redirigir apropiadamente
+    Route::post('/profile/update-adminaux', [UsuarioController::class, 'updateProfileAdminAux'])->name('usuario.update.adminaux');
     
     // Rutas de tickets
     Route::get('/levantarTicket', [TicketController::class, 'create'])->name('ticket.create');
@@ -55,13 +61,14 @@ Route::middleware('auth')->group(function () {
     
     // Rutas de interfaces (mantener compatibilidad)
     Route::get('/interfazadministrador', function () {
-        return view('interfazAdministrador');
-    });
+        $usuario = auth()->user()->load(['rol', 'departamento']);
+        return view('interfazAdministrador', compact('usuario'));
+    })->name('administrador');
     
     Route::get('/interfazsoporte', function () {
-        $usuario = auth()->user();
+        $usuario = auth()->user()->load(['rol', 'departamento']);
         return view('interfazSoporte', compact('usuario'));
-    });
+    })->name('soporte');
 
     Route::get('/administrardepartamentos', [DepartamentoController::class, 'index'])->name('departamentos.index');
     Route::post('/admin/departamentos/store', [DepartamentoController::class, 'store'])->name('departamentos.store');

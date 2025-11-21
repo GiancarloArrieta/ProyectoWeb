@@ -121,6 +121,15 @@ class UsuarioController extends Controller
     }
 
     /**
+     * Mostrar la vista para editar la información del Administrador o Auxiliar
+     */
+    public function editAdminAuxiliar(Request $request)
+    {
+        $origen = $request->get('origen', 'administrador'); // administrador o auxiliar
+        return view('editarInformacionAdminAuxiliar', compact('origen'));
+    }
+
+    /**
      * Actualizar perfil del usuario y manejar la foto de perfil
      */
     public function updateProfile(Request $request)
@@ -175,6 +184,69 @@ class UsuarioController extends Controller
 
         // **CAMBIO SOLICITADO:** Redirige a la vista de perfil
         return redirect()->route('usuario.profile')->with('success', '¡Perfil actualizado con éxito, incluyendo la foto!');
+    }
+
+    /**
+     * Actualizar perfil del Administrador o Auxiliar y redirigir a su interfaz correspondiente
+     */
+    public function updateProfileAdminAux(Request $request)
+    {
+        $usuario = auth()->user();
+
+        // 1. Validación
+        $rolNombre = $usuario->rol->nombre ?? '';
+        $puedeCambiarPassword = in_array($rolNombre, ['Administrador', 'Auxiliar']);
+        
+        $rules = [
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|unique:usuarios,correo,' . $usuario->id,
+            'profile_photo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:5120',
+        ];
+        
+        // Solo validar contraseña si el usuario tiene permiso
+        if ($puedeCambiarPassword) {
+            $rules['password'] = 'nullable|string|min:6|confirmed';
+        }
+
+        $validator = Validator::make($request->all(), $rules);
+
+        if ($validator->fails()) {
+            return back()->withErrors($validator)->withInput();
+        }
+
+        // 2. Manejo de la Foto de Perfil
+        if ($request->hasFile('profile_photo')) {
+            
+            // Eliminar la foto antigua si existe en el disco 'public'
+            if ($usuario->profile_photo && Storage::disk('public')->exists($usuario->profile_photo)) {
+                Storage::disk('public')->delete($usuario->profile_photo);
+            }
+
+            // Guardar la nueva foto
+            $path = $request->file('profile_photo')->store('profiles', 'public');
+            $usuario->profile_photo = $path;
+        }
+
+        // 3. Actualización de datos (nombre y email)
+        $usuario->nombre = $request->name;
+        $usuario->correo = $request->email;
+        
+        // 4. Actualizar contraseña si se proporcionó y el usuario tiene permiso
+        if ($puedeCambiarPassword && $request->filled('password')) {
+            $usuario->contreseña = Hash::make($request->password);
+        }
+        
+        // 5. Guardar cambios en la base de datos
+        $usuario->save();
+
+        // 6. Redirigir según el origen
+        $origen = $request->input('origen', 'administrador');
+        
+        if ($origen === 'auxiliar') {
+            return redirect()->route('soporte')->with('success', '¡Perfil actualizado con éxito!');
+        } else {
+            return redirect()->route('administrador')->with('success', '¡Perfil actualizado con éxito!');
+        }
     }
 }
 
