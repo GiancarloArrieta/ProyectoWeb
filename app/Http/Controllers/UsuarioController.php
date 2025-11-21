@@ -17,9 +17,15 @@ class UsuarioController extends Controller
      */
     public function index()
     {
-        $usuarios = Usuario::with(['rol', 'departamento'])->get();
-        $roles = Rol::all();
-        $departamentos = Departamento::all();
+        // Optimización: Seleccionar solo campos necesarios y usar eager loading
+        $usuarios = Usuario::select(['id', 'nombre', 'correo', 'id_rol', 'id_departamento', 'profile_photo'])
+                          ->with([
+                              'rol:id,nombre',
+                              'departamento:id,nombre'
+                          ])
+                          ->get();
+        $roles = Rol::select(['id', 'nombre'])->get();
+        $departamentos = Departamento::select(['id', 'nombre'])->get();
         
         return view('gestionarUsuario', compact('usuarios', 'roles', 'departamentos'));
     }
@@ -122,11 +128,21 @@ class UsuarioController extends Controller
         $usuario = auth()->user();
 
         // 1. Validación
-        $validator = Validator::make($request->all(), [
+        $rolNombre = $usuario->rol->nombre ?? '';
+        $puedeCambiarPassword = in_array($rolNombre, ['Administrador', 'Auxiliar']);
+        
+        $rules = [
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:usuarios,correo,' . $usuario->id,
-            'profile_photo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:5120', 
-        ]);
+            'profile_photo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:5120',
+        ];
+        
+        // Solo validar contraseña si el usuario tiene permiso
+        if ($puedeCambiarPassword) {
+            $rules['password'] = 'nullable|string|min:6|confirmed';
+        }
+
+        $validator = Validator::make($request->all(), $rules);
 
         if ($validator->fails()) {
             return back()->withErrors($validator)->withInput();
@@ -149,7 +165,12 @@ class UsuarioController extends Controller
         $usuario->nombre = $request->name;
         $usuario->correo = $request->email;
         
-        // 4. Guardar cambios en la base de datos
+        // 4. Actualizar contraseña si se proporcionó y el usuario tiene permiso
+        if ($puedeCambiarPassword && $request->filled('password')) {
+            $usuario->contreseña = Hash::make($request->password);
+        }
+        
+        // 5. Guardar cambios en la base de datos
         $usuario->save();
 
         // **CAMBIO SOLICITADO:** Redirige a la vista de perfil

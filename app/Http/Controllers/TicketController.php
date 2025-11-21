@@ -54,8 +54,10 @@ class TicketController extends Controller
     public function misTickets()
     {
         $usuario = auth()->user();
-        $tickets = Ticket::where('id_usuario', $usuario->id)
-                        ->with(['departamentoAsignado'])
+        // Optimización: Seleccionar solo campos necesarios
+        $tickets = Ticket::select(['id', 'título', 'descripción', 'status', 'id_departamento_asignado', 'created_at'])
+                        ->where('id_usuario', $usuario->id)
+                        ->with(['departamentoAsignado:id,nombre'])
                         ->orderBy('created_at', 'desc')
                         ->get();
 
@@ -100,7 +102,13 @@ class TicketController extends Controller
      */
     public function todosLosTickets()
     {
-        $tickets = Ticket::with(['usuario', 'departamentoAsignado', 'auxiliarAsignado'])
+        // Optimización: Usar eager loading y limitar campos innecesarios
+        $tickets = Ticket::select(['id', 'título', 'descripción', 'status', 'id_usuario', 'id_departamento_asignado', 'id_auxiliar_asignado', 'created_at', 'updated_at', 'fecha_asignacion', 'fecha_inicio', 'fecha_finalizacion'])
+                        ->with([
+                            'usuario:id,nombre,correo',
+                            'departamentoAsignado:id,nombre',
+                            'auxiliarAsignado:id,nombre,correo'
+                        ])
                         ->orderBy('created_at', 'desc')
                         ->get();
 
@@ -184,8 +192,13 @@ class TicketController extends Controller
     {
         $usuario = auth()->user();
         
-        $tickets = Ticket::where('id_auxiliar_asignado', $usuario->id)
-                        ->with(['usuario', 'departamentoAsignado'])
+        // Optimización: Seleccionar solo campos necesarios
+        $tickets = Ticket::select(['id', 'título', 'descripción', 'status', 'id_usuario', 'id_departamento_asignado', 'created_at', 'fecha_inicio', 'fecha_finalizacion'])
+                        ->where('id_auxiliar_asignado', $usuario->id)
+                        ->with([
+                            'usuario:id,nombre,correo',
+                            'departamentoAsignado:id,nombre'
+                        ])
                         ->whereIn('status', ['Asignado', 'En Proceso', 'Finalizado'])
                         ->orderByRaw("FIELD(status, 'En Proceso', 'Asignado', 'Finalizado')")
                         ->orderBy('created_at', 'asc')
@@ -201,6 +214,7 @@ class TicketController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'status' => 'required|in:Asignado,En Proceso,Finalizado',
+            'fecha_hora_cliente' => 'nullable|date', // Fecha y hora del cliente (opcional)
         ]);
 
         if ($validator->fails()) {
@@ -217,11 +231,16 @@ class TicketController extends Controller
 
         $dataToUpdate = ['status' => $request->status];
 
+        // Usar la fecha y hora del cliente si se proporciona, de lo contrario usar la del servidor
+        $fechaHora = $request->filled('fecha_hora_cliente') 
+            ? Carbon::parse($request->fecha_hora_cliente) 
+            : Carbon::now();
+
         // Registrar fechas según el estado
         if ($request->status === 'En Proceso' && !$ticket->fecha_inicio) {
-            $dataToUpdate['fecha_inicio'] = Carbon::now();
+            $dataToUpdate['fecha_inicio'] = $fechaHora;
         } elseif ($request->status === 'Finalizado' && !$ticket->fecha_finalizacion) {
-            $dataToUpdate['fecha_finalizacion'] = Carbon::now();
+            $dataToUpdate['fecha_finalizacion'] = $fechaHora;
         }
 
         $ticket->update($dataToUpdate);

@@ -242,10 +242,14 @@
 
             <div class="form-group">
                 <label for="profile_photo">Cambiar Foto de Perfil (Max 5MB, JPG/PNG):</label>
-                <input type="file" id="profile_photo" name="profile_photo" accept="image/*" class="@error('profile_photo') is-invalid @enderror">
+                <input type="file" id="profile_photo" name="profile_photo" accept="image/*" class="@error('profile_photo') is-invalid @enderror" onchange="previewImage(this)">
                 @error('profile_photo')
                     <span style="color: var(--color-danger-red); font-size: 0.8em; display: block; margin-top: 8px;">{{ $message }}</span>
                 @enderror
+                <div id="image-preview-container" style="margin-top: 15px; display: none;">
+                    <p style="font-size: 0.9em; color: var(--color-dark-text); margin-bottom: 8px; font-weight: 600;">Vista previa:</p>
+                    <img id="image-preview" src="" alt="Vista previa" style="width: 150px; height: 150px; border-radius: 50%; object-fit: cover; border: 3px solid var(--color-accent-warm); box-shadow: 0 4px 10px rgba(0,0,0,0.2);">
+                </div>
             </div>
 
             <div class="form-group">
@@ -257,6 +261,25 @@
                 <label for="edit_email">Email (Usado para Login):</label>
                 <input type="email" id="edit_email" name="email" value="{{ old('email', auth()->user()->correo ?? '') }}" required>
             </div>
+
+            @php
+                // Verificar si el usuario tiene rol de Administrador o Auxiliar
+                $usuario = auth()->user();
+                $rolNombre = $usuario->rol->nombre ?? '';
+                $puedeCambiarPassword = in_array($rolNombre, ['Administrador', 'Auxiliar']);
+            @endphp
+
+            @if($puedeCambiarPassword)
+                <div class="form-group">
+                    <label for="password">Nueva Contraseña <span style="font-size: 0.85em; color: #7f8c8d; font-weight: 400;">(Dejar en blanco para mantener la actual)</span>:</label>
+                    <input type="password" id="password" name="password" minlength="6">
+                </div>
+
+                <div class="form-group">
+                    <label for="password_confirmation">Confirmar Nueva Contraseña:</label>
+                    <input type="password" id="password_confirmation" name="password_confirmation" minlength="6">
+                </div>
+            @endif
             
             <div class="restriction-box">
                 <p style="font-weight: bold; margin-top: 0;">⚠️ Información NO Modificable por el Usuario</p>
@@ -283,6 +306,27 @@
         </form>
 
     </div>
+
+    <script>
+        // Función para previsualizar la imagen antes de guardar
+        function previewImage(input) {
+            const previewContainer = document.getElementById('image-preview-container');
+            const preview = document.getElementById('image-preview');
+            
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                
+                reader.onload = function(e) {
+                    preview.src = e.target.result;
+                    previewContainer.style.display = 'block';
+                };
+                
+                reader.readAsDataURL(input.files[0]);
+            } else {
+                previewContainer.style.display = 'none';
+            }
+        }
+    </script>
 
 </body>
 </html>

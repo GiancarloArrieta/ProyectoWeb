@@ -341,6 +341,13 @@
         #tabla-tickets th, #tabla-tickets td {
             padding: 12px 15px; 
             border-bottom: 1px solid #f4f4f4; 
+            max-width: 250px;
+            word-wrap: break-word;
+        }
+        #tabla-tickets td:nth-child(5) {
+            max-width: 300px;
+            font-size: 0.9em;
+            color: #555;
         }
         #tabla-tickets thead tr {
             background-color: var(--color-dark-primary); 
@@ -516,40 +523,62 @@
             <section id="todos-los-tickets" class="card-panel">
                 <h2>🎫 Todos los Tickets del Sistema</h2>
                 
-                <div class="controls-panel">
-                    <label for="filtro-estatus">Filtrar por Estatus:</label>
-                    <select id="filtro-estatus" onchange="filtrarTickets()">
-                        <option value="todos">Todos</option>
-                        <option value="Pendiente">Pendientes</option>
-                        <option value="En Proceso">En Proceso</option>
-                        <option value="Finalizado">Finalizados</option>
-                    </select>
+                <div class="controls-panel" style="flex-wrap: wrap; gap: 15px;">
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <label for="filtro-estatus">Filtrar por Estatus:</label>
+                        <select id="filtro-estatus" onchange="filtrarTickets()">
+                            <option value="todos">Todos</option>
+                            <option value="Pendiente">Pendientes</option>
+                            <option value="Asignado">Asignados</option>
+                            <option value="En Proceso">En Proceso</option>
+                            <option value="Finalizado">Finalizados</option>
+                        </select>
+                    </div>
+
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <label for="filtro-fecha">Filtrar por Fecha:</label>
+                        <select id="filtro-fecha" onchange="cambiarTipoFiltro()">
+                            <option value="todas">Todas las fechas</option>
+                            <option value="rango">Rango de fechas</option>
+                            <option value="semana">Esta semana</option>
+                            <option value="mes">Este mes</option>
+                        </select>
+                    </div>
+
+                    <div id="rango-fechas-container" style="display: none; gap: 10px; align-items: center;">
+                        <input type="date" id="fecha-inicio" onchange="filtrarTickets()" style="padding: 8px; border-radius: 6px; border: 1px solid var(--color-warm-accent);">
+                        <span>a</span>
+                        <input type="date" id="fecha-fin" onchange="filtrarTickets()" style="padding: 8px; border-radius: 6px; border: 1px solid var(--color-warm-accent);">
+                    </div>
 
                     <button type="button" onclick="generarReporte()" class="btn-reporte">
                         📄 Generar Reporte de Finalizados
                     </button>
                 </div>
                 
-                <table id="tabla-tickets">
-                    <thead>
-                        <tr>
-                            <th>ID</th>
-                            <th>Fecha Creación</th>
-                            <th>Usuario</th>
-                            <th>Título</th>
-                            <th>Departamento</th>
-                            <th>Estatus</th>
-                            <th>Auxiliar Asignado</th>
-                        </tr>
-                    </thead>
-                    <tbody id="tickets-tbody">
-                        <tr>
-                            <td colspan="7" style="text-align: center; padding: 20px; color: #7f8c8d;">
-                                Cargando tickets...
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
+                <div style="overflow-x: auto; margin-top: 20px;">
+                    <table id="tabla-tickets" style="min-width: 100%;">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Fecha Creación</th>
+                                <th>Usuario</th>
+                                <th>Título</th>
+                                <th>Descripción</th>
+                                <th>Departamento</th>
+                                <th>Estatus</th>
+                                <th>Auxiliar Asignado</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tickets-tbody">
+                            <tr>
+                                <td colspan="8" style="text-align: center; padding: 20px; color: #7f8c8d;">
+                                    Cargando tickets...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
             </section>
         </main>
     </div>
@@ -564,30 +593,58 @@
             if (!document.querySelector('meta[name="csrf-token"]')) {
                 console.warn('Advertencia: Falta la etiqueta <meta name="csrf-token">. Las llamadas POST podrían fallar.');
             }
-            cargarTickets();
-            cargarAuxiliares();
-            cargarIndicadoresDashboard();
+            
+            // Cargar datos en paralelo para optimizar tiempo de carga
+            Promise.all([
+                cargarTickets(),
+                cargarAuxiliares(),
+                cargarIndicadoresDashboard()
+            ]).catch(error => {
+                console.error('Error al cargar datos iniciales:', error);
+            });
+            
             // Actualizar indicadores cada 30 segundos
             setInterval(cargarIndicadoresDashboard, 30000);
         });
 
-        // Cargar todos los tickets
+        // Cargar todos los tickets (optimizado con caché y timeout)
         async function cargarTickets() {
             try {
-                const response = await fetch('/api/tickets/todos');
+                // Agregar timeout de 5 segundos para evitar esperas largas
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 5000);
+                
+                const response = await fetch('/api/tickets/todos', {
+                    signal: controller.signal,
+                    cache: 'no-cache'
+                });
+                
+                clearTimeout(timeoutId);
+                
                 if (!response.ok) throw new Error('Error al cargar tickets');
                 
                 todosLosTickets = await response.json();
                 mostrarTickets(todosLosTickets);
             } catch (error) {
-                console.error('Error:', error);
-                document.getElementById('tickets-tbody').innerHTML = `
-                    <tr>
-                        <td colspan="7" style="text-align: center; padding: 20px; color: var(--color-danger-red);">
-                            Error al cargar los tickets
-                        </td>
-                    </tr>
-                `;
+                if (error.name === 'AbortError') {
+                    console.error('Timeout al cargar tickets');
+                    document.getElementById('tickets-tbody').innerHTML = `
+                        <tr>
+                            <td colspan="8" style="text-align: center; padding: 20px; color: var(--color-danger-red);">
+                                ⏱️ Tiempo de espera agotado. Por favor, recargue la página.
+                            </td>
+                        </tr>
+                    `;
+                } else {
+                    console.error('Error:', error);
+                    document.getElementById('tickets-tbody').innerHTML = `
+                        <tr>
+                            <td colspan="8" style="text-align: center; padding: 20px; color: var(--color-danger-red);">
+                                Error al cargar los tickets
+                            </td>
+                        </tr>
+                    `;
+                }
             }
         }
 
@@ -610,7 +667,7 @@
             if (tickets.length === 0) {
                 tbody.innerHTML = `
                     <tr>
-                        <td colspan="7" style="text-align: center; padding: 20px; color: #7f8c8d;">
+                        <td colspan="8" style="text-align: center; padding: 20px; color: #7f8c8d;">
                             No hay tickets registrados
                         </td>
                     </tr>
@@ -621,6 +678,9 @@
             tbody.innerHTML = tickets.map(ticket => {
                 const fechaCreacion = new Date(ticket.created_at).toLocaleDateString('es-ES');
                 const auxiliar = ticket.auxiliar_asignado ? ticket.auxiliar_asignado.nombre : 'Sin asignar';
+                const descripcion = ticket.descripción || 'Sin descripción';
+                // Limitar descripción a 100 caracteres
+                const descripcionCorta = descripcion.length > 100 ? descripcion.substring(0, 100) + '...' : descripcion;
                 
                 // Mapear el estado a una clase CSS
                 const statusClass = `status-${ticket.status.replace(/\s/g, '-')}`;
@@ -636,6 +696,7 @@
                         <td>${fechaCreacion}</td>
                         <td>${ticket.usuario.nombre}</td>
                         <td>${ticket.título}</td>
+                        <td title="${descripcion}">${descripcionCorta}</td>
                         <td>${ticket.departamento_asignado ? ticket.departamento_asignado.nombre : 'N/A'}</td>
                         <td><span class="status-badge ${statusClass}">${ticket.status}</span></td>
                         <td>${auxiliar}</td>
@@ -644,16 +705,79 @@
             }).join('');
         }
 
-        // Filtrar tickets por estado
-        function filtrarTickets() {
-            const filtroEstatus = document.getElementById('filtro-estatus').value;
+        // Cambiar tipo de filtro de fecha
+        function cambiarTipoFiltro() {
+            const tipoFiltro = document.getElementById('filtro-fecha').value;
+            const rangoContainer = document.getElementById('rango-fechas-container');
             
-            if (filtroEstatus === 'todos') {
-                mostrarTickets(todosLosTickets);
+            if (tipoFiltro === 'rango') {
+                rangoContainer.style.display = 'flex';
             } else {
-                const ticketsFiltrados = todosLosTickets.filter(ticket => ticket.status === filtroEstatus);
-                mostrarTickets(ticketsFiltrados);
+                rangoContainer.style.display = 'none';
+                // Limpiar fechas
+                document.getElementById('fecha-inicio').value = '';
+                document.getElementById('fecha-fin').value = '';
             }
+            
+            filtrarTickets();
+        }
+
+        // Filtrar tickets por estado y fecha
+        function filtrarTickets() {
+            let ticketsFiltrados = [...todosLosTickets];
+            
+            // Filtrar por estatus
+            const filtroEstatus = document.getElementById('filtro-estatus').value;
+            if (filtroEstatus !== 'todos') {
+                ticketsFiltrados = ticketsFiltrados.filter(ticket => ticket.status === filtroEstatus);
+            }
+            
+            // Filtrar por fecha
+            const tipoFiltro = document.getElementById('filtro-fecha').value;
+            const hoy = new Date();
+            hoy.setHours(0, 0, 0, 0);
+            
+            if (tipoFiltro === 'rango') {
+                const fechaInicio = document.getElementById('fecha-inicio').value;
+                const fechaFin = document.getElementById('fecha-fin').value;
+                
+                if (fechaInicio) {
+                    const inicio = new Date(fechaInicio);
+                    inicio.setHours(0, 0, 0, 0);
+                    ticketsFiltrados = ticketsFiltrados.filter(ticket => {
+                        const fechaTicket = new Date(ticket.created_at);
+                        fechaTicket.setHours(0, 0, 0, 0);
+                        return fechaTicket >= inicio;
+                    });
+                }
+                
+                if (fechaFin) {
+                    const fin = new Date(fechaFin);
+                    fin.setHours(23, 59, 59, 999);
+                    ticketsFiltrados = ticketsFiltrados.filter(ticket => {
+                        const fechaTicket = new Date(ticket.created_at);
+                        return fechaTicket <= fin;
+                    });
+                }
+            } else if (tipoFiltro === 'semana') {
+                const inicioSemana = new Date(hoy);
+                inicioSemana.setDate(hoy.getDate() - hoy.getDay()); // Domingo de esta semana
+                inicioSemana.setHours(0, 0, 0, 0);
+                
+                ticketsFiltrados = ticketsFiltrados.filter(ticket => {
+                    const fechaTicket = new Date(ticket.created_at);
+                    return fechaTicket >= inicioSemana;
+                });
+            } else if (tipoFiltro === 'mes') {
+                const inicioMes = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
+                
+                ticketsFiltrados = ticketsFiltrados.filter(ticket => {
+                    const fechaTicket = new Date(ticket.created_at);
+                    return fechaTicket >= inicioMes;
+                });
+            }
+            
+            mostrarTickets(ticketsFiltrados);
         }
 
         // Mostrar modal para asignar ticket

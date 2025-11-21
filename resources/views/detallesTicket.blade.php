@@ -366,13 +366,19 @@
             if (!confirmacion) return;
 
             try {
+                // Obtener la fecha y hora actual del cliente (computadora local)
+                const fechaHoraCliente = new Date().toISOString();
+
                 const response = await fetch('/api/tickets/{{ $ticket->id }}/estado', {
                     method: 'PUT',
                     headers: {
                         'Content-Type': 'application/json',
                         'X-CSRF-TOKEN': '{{ csrf_token() }}'
                     },
-                    body: JSON.stringify({ status: nuevoEstado })
+                    body: JSON.stringify({ 
+                        status: nuevoEstado,
+                        fecha_hora_cliente: fechaHoraCliente
+                    })
                 });
 
                 const data = await response.json();
